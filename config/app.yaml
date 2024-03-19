@@ -1,0 +1,5 @@
+env: "local"
+app:
+  name: "go-web-template"
+  port: "8080"
+  web: "./web"
