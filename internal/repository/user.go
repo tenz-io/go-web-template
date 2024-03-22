@@ -1,9 +1,13 @@
 package repository
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
+//go:generate mockery --name User --filename user_mock.go --inpackage
 type User interface {
-	UserProfile(name string) (profile string)
+	UserProfile(ctx context.Context, name string) (profile string, err error)
 }
 
 func NewUser() User {
@@ -13,6 +17,6 @@ func NewUser() User {
 type user struct {
 }
 
-func (u *user) UserProfile(name string) (profile string) {
-	return fmt.Sprintf("my name is %s", name)
+func (u *user) UserProfile(_ context.Context, name string) (profile string, err error) {
+	return fmt.Sprintf("my name is %s", name), nil
 }

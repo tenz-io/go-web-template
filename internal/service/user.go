@@ -1,12 +1,14 @@
 package service
 
 import (
+	"context"
+
 	"go-web-template/internal/model"
 	"go-web-template/internal/repository"
 )
 
 type User interface {
-	GetByName(name string) (model.User, error)
+	GetByName(ctx context.Context, name string) (model.User, error)
 }
 
 func NewUser(
@@ -21,9 +23,14 @@ type user struct {
 	useRepo repository.User
 }
 
-func (u *user) GetByName(name string) (model.User, error) {
+func (u *user) GetByName(ctx context.Context, name string) (model.User, error) {
+	userProfile, err := u.useRepo.UserProfile(ctx, name)
+	if err != nil {
+		return model.User{}, err
+	}
+
 	return model.User{
 		Username: name,
-		Profile:  u.useRepo.UserProfile(name),
+		Profile:  userProfile,
 	}, nil
 }
