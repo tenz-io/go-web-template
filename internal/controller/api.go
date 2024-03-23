@@ -31,7 +31,7 @@ func (a *Api) hello(c *gin.Context) {
 		log.Println("query done")
 	}()
 
-	user, err := a.userService.GetByName("gopher")
+	user, err := a.userService.GetByName(c.Request.Context(), "gopher")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

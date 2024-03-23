@@ -20,7 +20,7 @@ func Test_user_GetByName(t *testing.T) {
 		ctx  context.Context
 		name string
 	}
-	type behavior func(_ fields, _ args)
+	type behavior func(fields, args)
 	tests := []struct {
 		name     string
 		fields   fields
