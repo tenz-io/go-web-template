@@ -15,7 +15,7 @@ build: wire ## Build
 .PHONY run:
 run: build #
 	#go run cmd/main.go
-	./bin/$(repo_name)
+	./bin/$(repo_name) -config=config/app.yaml -verbose
 
 .PHONY docker-build:
 docker-build:
@@ -23,4 +23,4 @@ docker-build:
 
 .PHONY docker-run:
 docker-run: docker-build
-	docker run -p 8080:8080 $(repo_name)
+	docker run -p 8080:8080 -p 8085:8085 $(repo_name)

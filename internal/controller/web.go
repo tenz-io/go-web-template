@@ -21,16 +21,27 @@ func NewWebServer(
 	cfg *config.Config,
 	api *Api,
 ) *WebServer {
-	return &WebServer{
+	if cfg.Verbose {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
+	engine := &WebServer{
 		engine: gin.New(),
 		cfg:    cfg,
 		api:    api,
 	}
+
+	return engine
 }
 
 func (ws *WebServer) Init() error {
 	// auth middleware
 	//ws.manager.Use(ws.user.applyAuth())
+
+	if ws.cfg.Verbose {
+		ws.engine.Use(gin.Logger())
+	}
 
 	tmplPattern := strings.Join([]string{
 		ws.cfg.App.Web,
