@@ -7,14 +7,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/tenz-io/gokit/ginterceptor"
 	"go-web-template/internal/config"
 )
 
 type WebServer struct {
-	engine *gin.Engine
-	cfg    *config.Config
-	api    *Api
+	engine      *gin.Engine
+	interceptor ginterceptor.Interceptor
+	cfg         *config.Config
+	api         *Api
 }
 
 func NewWebServer(
@@ -28,16 +29,25 @@ func NewWebServer(
 	}
 	engine := &WebServer{
 		engine: gin.New(),
-		cfg:    cfg,
-		api:    api,
+		interceptor: ginterceptor.NewInterceptorWithOpts(
+			ginterceptor.WithTraffic(true),
+			ginterceptor.WithMetrics(false),
+			ginterceptor.WithTimeout(0),
+		),
+		cfg: cfg,
+		api: api,
 	}
 
 	return engine
 }
 
 func (ws *WebServer) Init() error {
-	// auth middleware
-	//ws.manager.Use(ws.user.applyAuth())
+	{
+		ws.engine.Use(ws.interceptor.ApplyTracking())
+		ws.engine.Use(ws.interceptor.ApplyTraffic())
+		ws.engine.Use(ws.interceptor.ApplyMetrics())
+		ws.engine.Use(ws.interceptor.ApplyTimeout())
+	}
 
 	if ws.cfg.Verbose {
 		ws.engine.Use(gin.Logger())
