@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/service"
 )
@@ -27,8 +27,12 @@ func (a *Api) register(rg *gin.RouterGroup) {
 }
 
 func (a *Api) hello(c *gin.Context) {
+	var (
+		ctx = c.Request.Context()
+		le  = logger.FromContext(ctx)
+	)
 	defer func() {
-		log.Println("query done")
+		le.Debug("hello api called")
 	}()
 
 	user, err := a.userService.GetByName(c.Request.Context(), "gopher")

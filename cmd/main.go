@@ -2,13 +2,12 @@ package main
 
 import (
 	"fmt"
-	syslog "log"
-	"os"
+	"log"
 
 	"github.com/tenz-io/gokit/app"
 
+	"go-web-template/cmd/webgo"
 	"go-web-template/internal/config"
-	"go-web-template/internal/setup"
 )
 
 var flags = []app.Flag{
@@ -17,98 +16,47 @@ var flags = []app.Flag{
 		Value: "test",
 		Usage: "Environment",
 	},
-	&app.StringFlag{
-		Name:  "port",
-		Value: "8080",
-		Usage: "http port",
-	},
 }
 
-var (
-	controllers *setup.Controllers
-)
-
 func main() {
+	server := webgo.NewServer()
 	cfg := app.Config{
 		Name:  "go-web-template",
 		Usage: "Go Web Template",
 		Conf:  &config.Config{},
 		Inits: []app.InitFunc{
-			app.InitYamlConfig,
-			app.InitLogger,
-			app.InitDefaultHandler,
-			app.InitAdminHTTPServer,
+			app.WithYamlConfig(),
+			app.WithLogger(true),
+			app.WithAdminHTTPServer(),
 			updateConfByFlags,
-			initControllers,
+			server.Init,
 		},
-		Run: run,
+		Run: server.Run,
 	}
 
 	app.Run(cfg, flags)
 }
 
-func run(c *app.Context, confPtr any, errC chan<- error) {
-	controllers.Run(errC)
-}
-
 func updateConfByFlags(c *app.Context, confPtr any) (app.CleanFunc, error) {
 	var (
-		cleanF  = func() {}
-		rawPort string
-		protSrc string
-	)
-
-	conf, ok := confPtr.(*config.Config)
-	if !ok {
-		return cleanF, fmt.Errorf("invalid config type: %T", confPtr)
-	}
-
-	if v, err := c.GetFlags().Bool("verbose"); err == nil {
-		conf.Verbose = v
-		syslog.Printf("verbose: %v\n", v)
-	}
-
-	// get port from env variable
-	if envPort := os.Getenv("PORT"); envPort != "" {
-		rawPort = envPort
-		protSrc = "env variable"
-	}
-
-	if argPort, err := c.GetFlags().String("port"); err == nil && argPort != "" {
-		rawPort = argPort
-		protSrc = "command line argument"
-	}
-
-	if rawPort != "" {
-		conf.App.Port = rawPort
-		syslog.Printf("source: (%s), port: %s\n", protSrc, rawPort)
-	}
-
-	return func() {
-		syslog.Println("close port:", conf.App.Port)
-	}, nil
-}
-
-func initControllers(c *app.Context, confPtr any) (app.CleanFunc, error) {
-	var (
 		cleanF = func() {}
-		err    error
 	)
+
 	conf, ok := confPtr.(*config.Config)
 	if !ok {
 		return cleanF, fmt.Errorf("invalid config type: %T", confPtr)
 	}
 
-	controllers, err = setup.InitializeControllers(conf)
-	if err != nil {
-		return cleanF, fmt.Errorf("init controllers error: %w", err)
+	if v, err := c.GetFlags().Bool(app.FlagNameVerbose); err == nil {
+		conf.Verbose = v
+		log.Printf("verbose: %v\n", v)
 	}
 
-	if err = controllers.Init(); err != nil {
-		return cleanF, fmt.Errorf("init controllers error: %w", err)
+	if port, err := c.GetFlags().Int(app.FlagNamePort); err == nil {
+		conf.App.Port = fmt.Sprintf("%d", port)
 	}
 
 	return func() {
-		controllers.Shutdown()
+		log.Println("close port:", conf.App.Port)
 	}, nil
 }
