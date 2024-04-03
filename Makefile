@@ -7,6 +7,10 @@ go-mod-init:
 wire: ## Wire generate
 	wire gen $(repo_name)/internal/setup/...
 
+.PHONY: gci
+gci:
+	gci write -s standard -s default -s "prefix(github.com)" -s "prefix(go-web-template)" --skip-generated *
+
 .PHONY: build
 build: wire ## Build
 	mkdir -p bin

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/ginterceptor"
+
 	"go-web-template/internal/config"
 )
 
@@ -30,6 +31,7 @@ func NewWebServer(
 	engine := &WebServer{
 		engine: gin.New(),
 		interceptor: ginterceptor.NewInterceptorWithOpts(
+			ginterceptor.WithTracking(true),
 			ginterceptor.WithTraffic(true),
 			ginterceptor.WithMetrics(false),
 			ginterceptor.WithTimeout(0),
@@ -42,12 +44,7 @@ func NewWebServer(
 }
 
 func (ws *WebServer) Init() error {
-	{
-		ws.engine.Use(ws.interceptor.ApplyTracking())
-		ws.engine.Use(ws.interceptor.ApplyTraffic())
-		ws.engine.Use(ws.interceptor.ApplyMetrics())
-		ws.engine.Use(ws.interceptor.ApplyTimeout())
-	}
+	ws.interceptor.Apply(ws.engine)
 
 	if ws.cfg.Verbose {
 		ws.engine.Use(gin.Logger())
