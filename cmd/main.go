@@ -28,35 +28,37 @@ func main() {
 			app.WithYamlConfig(),
 			app.WithLogger(true),
 			app.WithAdminHTTPServer(),
-			updateConfByFlags,
-			server.Init,
+			updateConfByFlags(),
+			server.Init(),
 		},
-		Run: server.Run,
+		Run: server.Run(),
 	}
 
 	app.Run(cfg, flags)
 }
 
-func updateConfByFlags(c *app.Context, confPtr any) (app.CleanFunc, error) {
-	var (
-		cleanF = func() {}
-	)
+func updateConfByFlags() app.InitFunc {
+	return func(c *app.Context, confPtr any) (app.CleanFunc, error) {
+		var (
+			cleanF = func() {}
+		)
 
-	conf, ok := confPtr.(*config.Config)
-	if !ok {
-		return cleanF, fmt.Errorf("invalid config type: %T", confPtr)
+		conf, ok := confPtr.(*config.Config)
+		if !ok {
+			return cleanF, fmt.Errorf("invalid config type: %T", confPtr)
+		}
+
+		if v, err := c.GetFlags().Bool(app.FlagNameVerbose); err == nil {
+			conf.Verbose = v
+			log.Printf("verbose: %v\n", v)
+		}
+
+		if port, err := c.GetFlags().Int(app.FlagNamePort); err == nil {
+			conf.App.Port = fmt.Sprintf("%d", port)
+		}
+
+		return func() {
+			log.Println("close server on port:", conf.App.Port)
+		}, nil
 	}
-
-	if v, err := c.GetFlags().Bool(app.FlagNameVerbose); err == nil {
-		conf.Verbose = v
-		log.Printf("verbose: %v\n", v)
-	}
-
-	if port, err := c.GetFlags().Int(app.FlagNamePort); err == nil {
-		conf.App.Port = fmt.Sprintf("%d", port)
-	}
-
-	return func() {
-		log.Println("close port:", conf.App.Port)
-	}, nil
 }
