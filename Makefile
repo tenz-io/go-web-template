@@ -1,5 +1,10 @@
 repo_name := go-web-template
 
+TOOL_PATH = tool
+TOOL_FILES := $(shell cd $(TOOL_PATH); find . -maxdepth 1 -type d|grep -v '/common')
+TOOL_TAGET := $(basename $(patsubst ./%,%,$(TOOL_FILES)))
+TOOL_BIN_FILES := $(basename $(patsubst ./%,$(bin_dir)/%,$(TOOL_FILES)))
+
 go-mod-init:
 	go mod init $(repo_name)
 
@@ -20,6 +25,13 @@ build: wire ## Build
 run: build #
 	#go run cmd/main.go
 	./bin/$(repo_name) -config=config/app.yaml -verbose
+
+$(TOOL_TAGET):
+	@echo "=== build tool $@"
+	scripts/build-tool.sh $@
+
+.PHONY: build-tools
+build-tools: $(TOOL_TAGET)
 
 .PHONY docker-build:
 docker-build:
