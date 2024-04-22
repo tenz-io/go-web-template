@@ -5,16 +5,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tenz-io/gokit/ginterceptor"
+	"github.com/tenz-io/gokit/ginext"
 
 	"go-web-template/internal/config"
 )
 
 type WebServer struct {
 	engine      *gin.Engine
-	interceptor ginterceptor.Interceptor
+	interceptor ginext.Interceptor
 	cfg         *config.Config
 	api         *Api
 }
@@ -30,11 +31,11 @@ func NewWebServer(
 	}
 	engine := &WebServer{
 		engine: gin.New(),
-		interceptor: ginterceptor.NewInterceptorWithOpts(
-			ginterceptor.WithTracking(true),
-			ginterceptor.WithTraffic(true),
-			ginterceptor.WithMetrics(false),
-			ginterceptor.WithTimeout(0),
+		interceptor: ginext.NewInterceptorWithOpts(
+			ginext.WithTracking(true),
+			ginext.WithTraffic(true),
+			ginext.WithMetrics(false),
+			ginext.WithTimeout(60*time.Second),
 		),
 		cfg: cfg,
 		api: api,

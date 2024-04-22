@@ -7,7 +7,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tenz-io/gokit/app v1.6.1
-	github.com/tenz-io/gokit/ginterceptor v1.5.2
+	github.com/tenz-io/gokit/ginext v1.0.0
 	github.com/tenz-io/gokit/logger v1.5.0
 )
 
@@ -39,7 +39,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tenz-io/gokit/monitor v1.5.0 // indirect
-	github.com/tenz-io/gokit/tracer v1.0.0 // indirect
+	github.com/tenz-io/gokit/tracer v1.0.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
