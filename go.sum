@@ -90,8 +90,8 @@ github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.3/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/tenz-io/gokit/cmd v1.0.0 h1:0SX/DaC7y8sxlybpfYtR8CUqFWavrzdA1JYzq9CCRhE=
-github.com/tenz-io/gokit/cmd v1.0.0/go.mod h1:My43aJkzVSi8iZ1Y1H0AwR597IShsAwrRLyyHtdlQ0M=
+github.com/tenz-io/gokit/cmd v1.0.1 h1:dq3/UZRV2zoCVJoJGRJ8eeptmeVjiU372e89UM/ciMw=
+github.com/tenz-io/gokit/cmd v1.0.1/go.mod h1:My43aJkzVSi8iZ1Y1H0AwR597IShsAwrRLyyHtdlQ0M=
 github.com/tenz-io/gokit/ginext v1.0.0 h1:xhX932U/ZVgAQYWogcB9oWjdS+y/qOQEpxL/SWCCM/M=
 github.com/tenz-io/gokit/ginext v1.0.0/go.mod h1:FdkaBTQjwLFKBNLza/YTtpQK0WSp+DaN87Ac+TW/ljA=
 github.com/tenz-io/gokit/logger v1.5.0 h1:zPfsLbG55JFgQu5sOuWWaewJiUWW1jasNjSKHvgE1Sk=

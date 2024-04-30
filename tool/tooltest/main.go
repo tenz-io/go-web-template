@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/tenz-io/gokit/cmd"
 
 	"go-web-template/internal/config"
@@ -27,10 +29,11 @@ func main() {
 		Inits: []cmd.InitFunc{
 			cmd.WithLogger(true),
 			cmd.WithYamlConfig(),
-			initd(),
 		},
-		Run: run(),
 	}
 
-	cmd.Run(app, flags, commands...)
+	err := cmd.Run(app, flags, commands...)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
