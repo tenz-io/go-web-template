@@ -82,12 +82,9 @@ func (ws *WebServer) registerHomepage(rg *gin.RouterGroup) {
 }
 
 func (ws *WebServer) Run(errC chan<- error) {
-	addr := fmt.Sprintf(":%s", ws.cfg.App.Port)
-
+	addr := fmt.Sprintf(":%d", ws.cfg.App.Port)
 	log.Println("[Controllers] http server listen on ", addr)
-
 	err := ws.engine.Run(addr)
-
 	if err != nil {
 		errC <- err
 	}

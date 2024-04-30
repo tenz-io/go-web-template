@@ -37,7 +37,7 @@ func main() {
 			cmd.WithYamlConfig(),
 			cmd.WithLogger(true),
 			cmd.WithAdminHTTPServer(),
-			updateConfByFlags(),
+			updateConfig(),
 			server.Init(),
 		},
 		Run: server.Run(),
@@ -49,7 +49,7 @@ func main() {
 	}
 }
 
-func updateConfByFlags() cmd.InitFunc {
+func updateConfig() cmd.InitFunc {
 	return func(c *cmd.Context, confPtr any) (cmd.CleanFunc, error) {
 		var (
 			cleanF = func(_ *cmd.Context) {}
@@ -62,7 +62,7 @@ func updateConfByFlags() cmd.InitFunc {
 
 		conf.Verbose = c.Bool(cmd.FlagNameVerbose)
 		if c.IsSet("port") {
-			conf.App.Port = fmt.Sprintf("%d", c.Int("port"))
+			conf.App.Port = c.Int("port")
 		}
 		conf.DB.Pass = os.Getenv("DB_PASS")
 

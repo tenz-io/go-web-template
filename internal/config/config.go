@@ -9,13 +9,13 @@ type Config struct {
 
 type AppConfig struct {
 	Name string `yaml:"name" json:"name"`
-	Port string `yaml:"port" json:"port"`
+	Port int    `yaml:"port" json:"port"`
 	Web  string `yaml:"web" json:"web"`
 }
 
 type DBConfig struct {
 	Host string `yaml:"host" json:"host"`
-	Port string `yaml:"port" json:"port"`
+	Port int    `yaml:"port" json:"port"`
 	User string `yaml:"user" json:"user"`
 	Pass string `yaml:"pass" json:"pass"`
 	DB   string `yaml:"db" json:"db"`
