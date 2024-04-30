@@ -24,7 +24,7 @@ build: wire ## Build
 .PHONY run:
 run: build #
 	#go run cmd/main.go
-	./bin/$(repo_name) -config=config/app.yaml -verbose
+	./bin/$(repo_name) -c config/app.yaml -vv
 
 $(TOOL_TAGET):
 	@echo "=== build tool $@"

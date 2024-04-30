@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/tenz-io/gokit/cmd"
 
@@ -32,6 +33,7 @@ func main() {
 		Usage:   "Go Web Template",
 		ConfPtr: &config.Config{},
 		Inits: []cmd.InitFunc{
+			cmd.WithDotEnvConfig("config/.env"),
 			cmd.WithYamlConfig(),
 			cmd.WithLogger(true),
 			cmd.WithAdminHTTPServer(),
@@ -41,7 +43,10 @@ func main() {
 		Run: server.Run(),
 	}
 
-	cmd.Run(app, flags)
+	err := cmd.Run(app, flags)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func updateConfByFlags() cmd.InitFunc {
@@ -56,10 +61,10 @@ func updateConfByFlags() cmd.InitFunc {
 		}
 
 		conf.Verbose = c.Bool(cmd.FlagNameVerbose)
-		log.Printf("verbose: %v\n", conf.Verbose)
-
-		port := c.Int("port")
-		conf.App.Port = fmt.Sprintf("%d", port)
+		if c.IsSet("port") {
+			conf.App.Port = fmt.Sprintf("%d", c.Int("port"))
+		}
+		conf.DB.Pass = os.Getenv("DB_PASS")
 
 		return func(_ *cmd.Context) {
 			log.Println("close server on port:", conf.App.Port)
