@@ -3,7 +3,7 @@ package webgo
 import (
 	"fmt"
 
-	"github.com/tenz-io/gokit/app"
+	"github.com/tenz-io/gokit/cmd"
 
 	"go-web-template/internal/config"
 	"go-web-template/internal/setup"
@@ -17,10 +17,10 @@ func NewServer() *Server {
 	return &Server{}
 }
 
-func (s *Server) Init() app.InitFunc {
-	return func(c *app.Context, confPtr any) (app.CleanFunc, error) {
+func (s *Server) Init() cmd.InitFunc {
+	return func(c *cmd.Context, confPtr any) (cmd.CleanFunc, error) {
 		var (
-			cleanF = func() {}
+			cleanF = func(_ *cmd.Context) {}
 			err    error
 		)
 		conf, ok := confPtr.(*config.Config)
@@ -37,15 +37,15 @@ func (s *Server) Init() app.InitFunc {
 			return cleanF, fmt.Errorf("init controllers error: %w", err)
 		}
 
-		return func() {
+		return func(*cmd.Context) {
 			s.controllers.Shutdown()
 		}, nil
 	}
 
 }
 
-func (s *Server) Run() app.RunFunc {
-	return func(c *app.Context, confPtr any, errC chan<- error) {
+func (s *Server) Run() cmd.RunFunc {
+	return func(c *cmd.Context, confPtr any, errC chan<- error) {
 		s.controllers.Run(errC)
 	}
 }

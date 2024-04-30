@@ -4,43 +4,50 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/tenz-io/gokit/app"
+	"github.com/tenz-io/gokit/cmd"
 
 	"go-web-template/cmd/webgo"
 	"go-web-template/internal/config"
 )
 
-var flags = []app.Flag{
-	&app.StringFlag{
-		Name:  "env",
-		Value: "test",
-		Usage: "Environment",
+var flags = []cmd.Flag{
+	&cmd.StringFlag{
+		Name:    "env",
+		Aliases: []string{"e"},
+		Value:   "test",
+		Usage:   "Environment",
+	},
+	&cmd.IntFlag{
+		Name:    "port",
+		Aliases: []string{"p"},
+		Value:   8080,
+		Usage:   "Port",
 	},
 }
 
 func main() {
 	server := webgo.NewServer()
-	cfg := app.Config{
-		Name:  "go-web-template",
-		Usage: "Go Web Template",
-		Conf:  &config.Config{},
-		Inits: []app.InitFunc{
-			app.WithYamlConfig(),
-			app.WithLogger(true),
-			app.WithAdminHTTPServer(),
+	app := cmd.App{
+		Name:    "go-web-template",
+		Usage:   "Go Web Template",
+		ConfPtr: &config.Config{},
+		Inits: []cmd.InitFunc{
+			cmd.WithYamlConfig(),
+			cmd.WithLogger(true),
+			cmd.WithAdminHTTPServer(),
 			updateConfByFlags(),
 			server.Init(),
 		},
 		Run: server.Run(),
 	}
 
-	app.Run(cfg, flags)
+	cmd.Run(app, flags)
 }
 
-func updateConfByFlags() app.InitFunc {
-	return func(c *app.Context, confPtr any) (app.CleanFunc, error) {
+func updateConfByFlags() cmd.InitFunc {
+	return func(c *cmd.Context, confPtr any) (cmd.CleanFunc, error) {
 		var (
-			cleanF = func() {}
+			cleanF = func(_ *cmd.Context) {}
 		)
 
 		conf, ok := confPtr.(*config.Config)
@@ -48,16 +55,13 @@ func updateConfByFlags() app.InitFunc {
 			return cleanF, fmt.Errorf("invalid config type: %T", confPtr)
 		}
 
-		if v, err := c.GetFlags().Bool(app.FlagNameVerbose); err == nil {
-			conf.Verbose = v
-			log.Printf("verbose: %v\n", v)
-		}
+		conf.Verbose = c.Bool(cmd.FlagNameVerbose)
+		log.Printf("verbose: %v\n", conf.Verbose)
 
-		if port, err := c.GetFlags().Int(app.FlagNamePort); err == nil {
-			conf.App.Port = fmt.Sprintf("%d", port)
-		}
+		port := c.Int("port")
+		conf.App.Port = fmt.Sprintf("%d", port)
 
-		return func() {
+		return func(_ *cmd.Context) {
 			log.Println("close server on port:", conf.App.Port)
 		}, nil
 	}

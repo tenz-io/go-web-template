@@ -1,13 +1,18 @@
 package main
 
 import (
-	"github.com/tenz-io/gokit/app"
+	"github.com/tenz-io/gokit/cmd"
 
 	"go-web-template/internal/config"
 )
 
-var flags = []app.Flag{
-	&app.StringFlag{
+var commands = []*cmd.Command{
+	getCmd,
+	setCmd,
+}
+
+var flags = []cmd.Flag{
+	&cmd.StringFlag{
 		Name:  "env",
 		Value: "test",
 		Usage: "Environment",
@@ -15,17 +20,17 @@ var flags = []app.Flag{
 }
 
 func main() {
-	cfg := app.Config{
-		Name:  "go-web-template",
-		Usage: "Go Web Template",
-		Conf:  &config.Config{},
-		Inits: []app.InitFunc{
-			app.WithLogger(true),
-			app.WithYamlConfig(),
+	app := cmd.App{
+		Name:    "go-web-template",
+		Usage:   "Go Web Template",
+		ConfPtr: &config.Config{},
+		Inits: []cmd.InitFunc{
+			cmd.WithLogger(true),
+			cmd.WithYamlConfig(),
 			initd(),
 		},
 		Run: run(),
 	}
 
-	app.Run(cfg, flags)
+	cmd.Run(app, flags, commands...)
 }
