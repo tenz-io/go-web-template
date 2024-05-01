@@ -39,4 +39,6 @@ docker-build:
 
 .PHONY docker-run:
 docker-run: docker-build
-	docker run -p 8080:8080 -p 8085:8085 $(repo_name)
+	docker rm -f $(repo_name) || true
+	docker run --name $(repo_name) -p 8080:8080 -p 8085:8085 $(repo_name)
+

@@ -34,4 +34,4 @@ COPY --from=build /app ./app
 COPY web web/
 COPY config config/
 
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./app", "-a", "8085", "-p", "8080", "-vv"]
