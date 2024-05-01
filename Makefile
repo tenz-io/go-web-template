@@ -35,7 +35,7 @@ build-tools: $(TOOL_TAGET)
 
 .PHONY docker-build:
 docker-build:
-	docker build -t $(repo_name) .
+	docker build --build-arg SKAFFOLD_GO_GCFLAGS="-N -l" -t $(repo_name) .
 
 .PHONY docker-run:
 docker-run: docker-build
