@@ -7,6 +7,9 @@ import (
 	"go-web-template/internal/repository"
 )
 
+// User is the interface that provides user methods.
+//
+//go:generate mockery --name User --filename user_mock.go --inpackage
 type User interface {
 	GetByName(ctx context.Context, name string) (model.User, error)
 }

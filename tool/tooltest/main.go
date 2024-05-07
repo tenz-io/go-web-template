@@ -15,19 +15,18 @@ var commands = []*cmd.Command{
 
 var flags = []cmd.Flag{
 	&cmd.StringFlag{
-		Name:  "env",
-		Value: "test",
-		Usage: "Environment",
+		Name:  "foo",
+		Value: "bar",
+		Usage: "foo bar",
 	},
 }
 
 func main() {
 	app := cmd.App{
-		Name:    "go-web-template",
-		Usage:   "Go Web Template",
+		Name:    "tooltest",
+		Usage:   "Tool Test",
 		ConfPtr: &config.Config{},
 		Inits: []cmd.InitFunc{
-			cmd.WithLogger(true),
 			cmd.WithYamlConfig(),
 		},
 	}

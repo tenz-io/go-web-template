@@ -8,6 +8,10 @@ TOOL_BIN_FILES := $(basename $(patsubst ./%,$(bin_dir)/%,$(TOOL_FILES)))
 go-mod-init:
 	go mod init $(repo_name)
 
+.PHONY: generate
+generate: ## Generate
+	go generate ./internal/constant/... ./internal/repository/... ./internal/service/...
+
 .PHONY: wire
 wire: ## Wire generate
 	wire gen $(repo_name)/internal/setup/...
@@ -20,6 +24,15 @@ gci:
 build: wire ## Build
 	mkdir -p bin
 	go build -mod=readonly -v -o bin/$(repo_name) ./cmd
+
+.PHONY: dep
+dep:
+	go mod tidy -v
+
+
+.PHONY: test
+test:
+	go test -v ./... -cover
 
 .PHONY run:
 run: build #

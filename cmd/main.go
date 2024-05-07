@@ -12,12 +12,6 @@ import (
 )
 
 var flags = []cmd.Flag{
-	&cmd.StringFlag{
-		Name:    "env",
-		Aliases: []string{"e"},
-		Value:   "test",
-		Usage:   "Environment",
-	},
 	&cmd.IntFlag{
 		Name:    "port",
 		Aliases: []string{"p"},
@@ -33,7 +27,7 @@ func main() {
 		Usage:   "Go Web Template",
 		ConfPtr: &config.Config{},
 		Inits: []cmd.InitFunc{
-			cmd.WithDotEnvConfig("config/.env"),
+			cmd.WithDotEnvConfig(),
 			cmd.WithYamlConfig(),
 			cmd.WithLogger(true),
 			cmd.WithAdminHTTPServer(),
