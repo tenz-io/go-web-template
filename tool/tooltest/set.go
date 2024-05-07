@@ -15,12 +15,12 @@ var setCmd = &cmd.Command{
 	Flags: []cmd.Flag{
 		&cmd.StringFlag{
 			Name:  "key",
-			Usage: "key",
+			Usage: "key to set",
 			Value: "",
 		},
 		&cmd.StringFlag{
 			Name:  "val",
-			Usage: "val",
+			Usage: "val to set",
 			Value: "",
 		},
 	},
