@@ -14,16 +14,14 @@ var setCmd = &cmd.Command{
 	Usage: "demonstrate set command",
 	Flags: []cmd.Flag{
 		&cmd.StringFlag{
-			Name:    "key",
-			Aliases: []string{"k"},
-			Usage:   "key",
-			Value:   "",
+			Name:  "key",
+			Usage: "key to set",
+			Value: "",
 		},
 		&cmd.StringFlag{
-			Name:    "val",
-			Aliases: []string{"v"},
-			Usage:   "val",
-			Value:   "",
+			Name:  "val",
+			Usage: "val to set",
+			Value: "",
 		},
 	},
 	Action: set,

@@ -12,10 +12,9 @@ var getCmd = &cmd.Command{
 	Usage: "demonstrate get command",
 	Flags: []cmd.Flag{
 		&cmd.StringFlag{
-			Name:    "key",
-			Aliases: []string{"k"},
-			Usage:   "key",
-			Value:   "",
+			Name:  "key",
+			Usage: "key to get",
+			Value: "",
 		},
 	},
 	Action: get,
