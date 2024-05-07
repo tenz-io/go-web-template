@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option go_package = "image-server/api/http/app;app";
+
+package http.app;
+
+import "google/api/annotations.proto";
+
+
+service ApiServer {
+  rpc Hello(HelloRequest) returns (HelloResponse) {
+    option (google.api.http) = {
+      get: "/hello"
+    };
+  }
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (google.api.http) = {
+      post: "/login"
+    };
+  }
+}
+
+message HelloRequest {
+  // @inject_tag: form:"name" binding:"required"
+  string name = 1;
+}
+
+message HelloResponse {
+  string message = 1;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+}
+

@@ -1,0 +1,11 @@
+### hello
+GET localhost:8090/hello/?name=John
+
+### login
+POST localhost:8090/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "admin"
+}

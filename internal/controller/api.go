@@ -1,47 +1,70 @@
 package controller
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
+
+	"github.com/tenz-io/gokit/ginext/errcode"
 	"github.com/tenz-io/gokit/logger"
 
+	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/service"
 )
 
-type Api struct {
+type ApiServer struct {
 	userService service.User
 }
 
-// NewApiController returns a new instance of the Api struct.
-func NewApiController(
+func NewApiServer(
 	userService service.User,
-) *Api {
-	return &Api{
+) *ApiServer {
+	return &ApiServer{
 		userService: userService,
 	}
 }
 
-func (a *Api) register(rg *gin.RouterGroup) {
-	rg.GET("/hello", a.hello)
-}
-
-func (a *Api) hello(c *gin.Context) {
+func (s *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
 	var (
-		ctx = c.Request.Context()
-		le  = logger.FromContext(ctx)
+		le = logger.FromContext(ctx)
 	)
 	defer func() {
-		le.Debug("hello api called")
+		le.Debug("hello called")
 	}()
 
-	user, err := a.userService.GetByName(c.Request.Context(), "gopher")
+	user, err := s.userService.GetByName(ctx, request.GetName())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
+		return nil, err
 	}
-	c.JSON(http.StatusOK, map[string]string{
-		"username": user.Username,
-		"profile":  user.Profile,
-	})
+	return &pbapp.HelloResponse{
+		Message: user.Profile,
+	}, nil
+}
+
+func (s *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
+	var (
+		meta, existing = metadata.FromIncomingContext(ctx)
+		le             = logger.FromContext(ctx).WithFields(logger.Fields{
+			"username":     request.GetUsername(),
+			"meta":         meta,
+			"existing":     existing,
+			"Content-Type": meta.Get("Content-Type"),
+		})
+	)
+
+	defer func() {
+		le.Debug("login called")
+	}()
+
+	_, err := s.userService.GetByName(ctx, request.GetUsername())
+	if err != nil {
+		return nil, errcode.NotFound(http.StatusOK, "user not found")
+	}
+
+	if request.Username == request.Password {
+		return &pbapp.LoginResponse{}, nil
+	}
+
+	return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
 }

@@ -20,6 +20,20 @@ wire: ## Wire generate
 gci:
 	gci write -s standard -s default -s "prefix(github.com)" -s "prefix(go-web-template)" --skip-generated *
 
+
+.PHONY: proto-compile
+proto-compile:
+	@echo "=== generate gin api"
+	protoc -I ./api \
+	--openapiv2_out ./api --openapiv2_opt logtostderr=true \
+	--openapiv2_opt json_names_for_fields=false \
+	--go_out ./api --go_opt=paths=source_relative \
+	--go-gin_out ./api --go-gin_opt=paths=source_relative \
+	./api/http/app/*.proto
+
+	@echo "=== generate tag for gin api"
+	protoc-go-inject-tag -input=./api/http/app/*.pb.go
+
 .PHONY: build
 build: wire ## Build
 	mkdir -p bin
@@ -37,7 +51,7 @@ test:
 .PHONY run:
 run: build #
 	#go run cmd/main.go
-	./bin/$(repo_name) -c config/app.yaml -vv
+	./bin/$(repo_name) -c config/app.yaml -p 8090 -v
 
 $(TOOL_TAGET):
 	@echo "=== build tool $@"

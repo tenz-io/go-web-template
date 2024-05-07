@@ -18,8 +18,8 @@ import (
 func InitializeControllers(configConfig *config.Config) (*Controllers, error) {
 	user := repository.NewUser()
 	serviceUser := service.NewUser(user)
-	api := controller.NewApiController(serviceUser)
-	webServer := controller.NewWebServer(configConfig, api)
+	apiServer := controller.NewApiServer(serviceUser)
+	webServer := controller.NewWebServer(configConfig, apiServer)
 	controllers := &Controllers{
 		webServer: webServer,
 	}

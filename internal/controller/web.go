@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/ginext"
 
+	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/config"
 )
 
@@ -17,19 +18,19 @@ type WebServer struct {
 	engine      *gin.Engine
 	interceptor ginext.Interceptor
 	cfg         *config.Config
-	api         *Api
+	api         *ApiServer
 }
 
 func NewWebServer(
 	cfg *config.Config,
-	api *Api,
+	apiServer *ApiServer,
 ) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	engine := &WebServer{
+	ws := &WebServer{
 		engine: gin.New(),
 		interceptor: ginext.NewInterceptorWithOpts(
 			ginext.WithTracking(true),
@@ -38,10 +39,10 @@ func NewWebServer(
 			ginext.WithTimeout(60*time.Second),
 		),
 		cfg: cfg,
-		api: api,
+		api: apiServer,
 	}
 
-	return engine
+	return ws
 }
 
 func (ws *WebServer) Init() error {
@@ -67,8 +68,7 @@ func (ws *WebServer) Init() error {
 	baseGrp := ws.engine.Group("")
 	ws.registerHomepage(baseGrp)
 
-	apiGroup := ws.engine.Group("api")
-	ws.api.register(apiGroup)
+	pbapp.RegisterApiServerHTTPServer(ws.engine, ws.api)
 
 	return nil
 }
