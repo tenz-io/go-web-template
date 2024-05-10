@@ -7,7 +7,7 @@ require (
 	github.com/google/wire v0.6.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tenz-io/gokit/cmd v1.0.6
-	github.com/tenz-io/gokit/ginext v1.0.3
+	github.com/tenz-io/gokit/ginext v1.0.7
 	github.com/tenz-io/gokit/logger v1.5.2
 	google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae
 	google.golang.org/grpc v1.63.2

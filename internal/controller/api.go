@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"google.golang.org/grpc/metadata"
@@ -25,7 +26,7 @@ func NewApiServer(
 	}
 }
 
-func (s *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
+func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
 	var (
 		le = logger.FromContext(ctx)
 	)
@@ -33,7 +34,7 @@ func (s *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pb
 		le.Debug("hello called")
 	}()
 
-	user, err := s.userService.GetByName(ctx, request.GetName())
+	user, err := as.userService.GetByName(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +43,7 @@ func (s *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pb
 	}, nil
 }
 
-func (s *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
+func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
 	var (
 		meta, existing = metadata.FromIncomingContext(ctx)
 		le             = logger.FromContext(ctx).WithFields(logger.Fields{
@@ -57,7 +58,7 @@ func (s *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pb
 		le.Debug("login called")
 	}()
 
-	_, err := s.userService.GetByName(ctx, request.GetUsername())
+	_, err := as.userService.GetByName(ctx, request.GetUsername())
 	if err != nil {
 		return nil, errcode.NotFound(http.StatusOK, "user not found")
 	}
@@ -67,4 +68,35 @@ func (s *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pb
 	}
 
 	return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
+}
+
+func (as *ApiServer) GetImage(ctx context.Context, request *pbapp.GetImageRequest) (*pbapp.GetImageResponse, error) {
+	var (
+		meta, existing = metadata.FromIncomingContext(ctx)
+		le             = logger.FromContext(ctx).WithFields(logger.Fields{
+			"meta":      meta,
+			"existing":  existing,
+			"image_key": request.GetKey(),
+		})
+	)
+
+	le.Debug("get image")
+	// TODO
+	return nil, errcode.NotFound(http.StatusOK, "image not found")
+}
+
+func (as *ApiServer) UploadImage(ctx context.Context, request *pbapp.UploadImageRequest) (*pbapp.UploadImageResponse, error) {
+	var (
+		meta, existing = metadata.FromIncomingContext(ctx)
+		le             = logger.FromContext(ctx).WithFields(logger.Fields{
+			"meta":      meta,
+			"existing":  existing,
+			"filename":  request.GetFilename(),
+			"file_size": len(request.GetFile()),
+		})
+	)
+
+	le.Debug("upload image")
+	// TODO
+	return nil, errcode.InternalServer(http.StatusOK, fmt.Sprintf("upload image error"))
 }

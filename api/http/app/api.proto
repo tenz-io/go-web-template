@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "image-server/api/http/app;app";
+option go_package = "go-web-template/api/http/app;app";
 
 package http.app;
 
@@ -16,6 +16,17 @@ service ApiServer {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/login"
+    };
+  }
+  rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {
+    option (google.api.http) = {
+      post: "/upload/image"
+      body: "*"
+    };
+  }
+  rpc GetImage(GetImageRequest) returns (GetImageResponse) {
+    option (google.api.http) = {
+      get: "/image/{key}"
     };
   }
 }
@@ -35,5 +46,23 @@ message LoginRequest {
 }
 
 message LoginResponse {
+}
+
+message UploadImageRequest {
+  string filename = 1; // the filename of the image
+  bytes file = 2; // the image file
+}
+
+message UploadImageResponse {
+  string key = 1;
+}
+
+message GetImageRequest {
+  // @inject_tag: form:"name" uri:"key" binding:"required"
+  string key = 1;
+}
+
+message GetImageResponse {
+  bytes file = 1;
 }
 

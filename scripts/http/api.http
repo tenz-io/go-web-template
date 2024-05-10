@@ -6,6 +6,23 @@ POST localhost:8090/login
 Content-Type: application/json
 
 {
-    "username": "admin",
-    "password": "admin"
+  "username": "admin",
+  "password": "admin"
 }
+
+### get image
+GET localhost:8090/image/f4636813f0571a3fc035af92f61bcd0c
+
+
+### upload image
+POST localhost:8090/upload/image
+Content-Type: multipart/form-data; boundary=xxxxyyyyzzzz
+
+--xxxxyyyyzzzz
+Content-Disposition: form-data; name="file"; filename="t-shirt.png"
+
+< /Users/edtenz/Documents/Thumbnails/t-shirt.png
+--xxxxyyyyzzzz--
+
+###
+

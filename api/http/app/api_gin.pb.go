@@ -15,9 +15,13 @@ import (
 // gin.ginext.
 
 type ApiServerHTTPServer interface {
+	GetImage(context.Context, *GetImageRequest) (*GetImageResponse, error)
+
 	Hello(context.Context, *HelloRequest) (*HelloResponse, error)
 
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
+
+	UploadImage(context.Context, *UploadImageRequest) (*UploadImageResponse, error)
 }
 
 func RegisterApiServerHTTPServer(r gin.IRouter, srv ApiServerHTTPServer) {
@@ -41,6 +45,11 @@ func (s *ApiServer) Hello_0(ctx *gin.Context) {
 		return
 	}
 	md := metadata.New(nil)
+	md.Set("path", ctx.Request.URL.Path)
+	md.Set("raw_query", ctx.Request.URL.RawQuery)
+	for k, v := range ctx.Request.URL.Query() {
+		md.Set(k, v...)
+	}
 	for k, v := range ctx.Request.Header {
 		md.Set(k, v...)
 	}
@@ -62,6 +71,11 @@ func (s *ApiServer) Login_0(ctx *gin.Context) {
 		return
 	}
 	md := metadata.New(nil)
+	md.Set("path", ctx.Request.URL.Path)
+	md.Set("raw_query", ctx.Request.URL.RawQuery)
+	for k, v := range ctx.Request.URL.Query() {
+		md.Set(k, v...)
+	}
 	for k, v := range ctx.Request.Header {
 		md.Set(k, v...)
 	}
@@ -75,10 +89,71 @@ func (s *ApiServer) Login_0(ctx *gin.Context) {
 	ginext.Response(ctx, out)
 }
 
+func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
+	var in UploadImageRequest
+
+	if err := ginext.ShouldBind(ctx, &in); err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+	md := metadata.New(nil)
+	md.Set("path", ctx.Request.URL.Path)
+	md.Set("raw_query", ctx.Request.URL.RawQuery)
+	for k, v := range ctx.Request.URL.Query() {
+		md.Set(k, v...)
+	}
+	for k, v := range ctx.Request.Header {
+		md.Set(k, v...)
+	}
+	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
+	out, err := s.server.(ApiServerHTTPServer).UploadImage(newCtx, &in)
+	if err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+
+	ginext.Response(ctx, out)
+}
+
+func (s *ApiServer) GetImage_0(ctx *gin.Context) {
+	var in GetImageRequest
+
+	if err := ginext.ShouldBindUri(ctx, &in); err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+
+	if err := ginext.ShouldBind(ctx, &in); err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+	md := metadata.New(nil)
+	md.Set("path", ctx.Request.URL.Path)
+	md.Set("raw_query", ctx.Request.URL.RawQuery)
+	for k, v := range ctx.Request.URL.Query() {
+		md.Set(k, v...)
+	}
+	for k, v := range ctx.Request.Header {
+		md.Set(k, v...)
+	}
+	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
+	out, err := s.server.(ApiServerHTTPServer).GetImage(newCtx, &in)
+	if err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+
+	ginext.Response(ctx, out)
+}
+
 func (s *ApiServer) RegisterService() {
 
 	s.router.Handle("GET", "/hello", s.Hello_0)
 
 	s.router.Handle("POST", "/login", s.Login_0)
+
+	s.router.Handle("POST", "/upload/image", s.UploadImage_0)
+
+	s.router.Handle("GET", "/image/:key", s.GetImage_0)
 
 }

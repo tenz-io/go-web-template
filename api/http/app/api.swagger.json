@@ -47,6 +47,37 @@
         ]
       }
     },
+    "/image/{key}": {
+      "get": {
+        "operationId": "ApiServer_GetImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appGetImageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "key",
+            "description": "@inject_tag: form:\"name\" uri:\"key\" binding:\"required\"",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "ApiServer"
+        ]
+      }
+    },
     "/login": {
       "post": {
         "operationId": "ApiServer_Login",
@@ -82,9 +113,50 @@
           "ApiServer"
         ]
       }
+    },
+    "/upload/image": {
+      "post": {
+        "operationId": "ApiServer_UploadImage",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/appUploadImageResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/appUploadImageRequest"
+            }
+          }
+        ],
+        "tags": [
+          "ApiServer"
+        ]
+      }
     }
   },
   "definitions": {
+    "appGetImageResponse": {
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
     "appHelloResponse": {
       "type": "object",
       "properties": {
@@ -95,6 +167,28 @@
     },
     "appLoginResponse": {
       "type": "object"
+    },
+    "appUploadImageRequest": {
+      "type": "object",
+      "properties": {
+        "filename": {
+          "type": "string",
+          "title": "the filename of the image"
+        },
+        "file": {
+          "type": "string",
+          "format": "byte",
+          "title": "the image file"
+        }
+      }
+    },
+    "appUploadImageResponse": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
     },
     "protobufAny": {
       "type": "object",
