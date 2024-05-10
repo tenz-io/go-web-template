@@ -19,9 +19,9 @@ POST localhost:8090/upload/image
 Content-Type: multipart/form-data; boundary=xxxxyyyyzzzz
 
 --xxxxyyyyzzzz
-Content-Disposition: form-data; name="file"; filename="t-shirt.png"
+Content-Disposition: form-data; name="file"; filename="test.png"
 
-< /Users/edtenz/Documents/Thumbnails/t-shirt.png
+< /file/to/image/test.png
 --xxxxyyyyzzzz--
 
 ###
