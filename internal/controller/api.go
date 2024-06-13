@@ -2,16 +2,20 @@ package controller
 
 import (
 	"context"
+	"crypto/md5"
 	"fmt"
 	"net/http"
 
-	"google.golang.org/grpc/metadata"
-
 	"github.com/tenz-io/gokit/ginext/errcode"
+	"github.com/tenz-io/gokit/ginext/metadata"
 	"github.com/tenz-io/gokit/logger"
 
 	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/service"
+)
+
+var (
+	_ pbapp.ApiServerHTTPServer = (*ApiServer)(nil)
 )
 
 type ApiServer struct {
@@ -45,12 +49,11 @@ func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*p
 
 func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
 	var (
-		meta, existing = metadata.FromIncomingContext(ctx)
+		meta, existing = metadata.FromContext(ctx)
 		le             = logger.FromContext(ctx).WithFields(logger.Fields{
-			"username":     request.GetUsername(),
-			"meta":         meta,
-			"existing":     existing,
-			"Content-Type": meta.Get("Content-Type"),
+			"username": request.GetUsername(),
+			"meta":     meta,
+			"existing": existing,
 		})
 	)
 
@@ -72,11 +75,11 @@ func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*p
 
 func (as *ApiServer) GetImage(ctx context.Context, request *pbapp.GetImageRequest) (*pbapp.GetImageResponse, error) {
 	var (
-		meta, existing = metadata.FromIncomingContext(ctx)
+		meta, existing = metadata.FromContext(ctx)
 		le             = logger.FromContext(ctx).WithFields(logger.Fields{
-			"meta":      meta,
-			"existing":  existing,
-			"image_key": request.GetKey(),
+			"meta":     meta,
+			"existing": existing,
+			"key":      request.GetKey(),
 		})
 	)
 
@@ -87,16 +90,25 @@ func (as *ApiServer) GetImage(ctx context.Context, request *pbapp.GetImageReques
 
 func (as *ApiServer) UploadImage(ctx context.Context, request *pbapp.UploadImageRequest) (*pbapp.UploadImageResponse, error) {
 	var (
-		meta, existing = metadata.FromIncomingContext(ctx)
+		meta, existing = metadata.FromContext(ctx)
 		le             = logger.FromContext(ctx).WithFields(logger.Fields{
 			"meta":      meta,
 			"existing":  existing,
-			"filename":  request.GetFilename(),
 			"file_size": len(request.GetFile()),
 		})
+		key = request.GetKey()
 	)
 
+	if key == "" {
+		key = fmt.Sprintf("%x", md5.Sum(request.GetFile()))
+	}
+
+	le = le.WithFields(logger.Fields{
+		"key": key,
+	})
+
 	le.Debug("upload image")
-	// TODO
-	return nil, errcode.InternalServer(http.StatusOK, fmt.Sprintf("upload image error"))
+	return &pbapp.UploadImageResponse{
+		Key: key,
+	}, nil
 }

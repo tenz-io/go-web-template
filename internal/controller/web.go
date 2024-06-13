@@ -5,20 +5,17 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tenz-io/gokit/ginext"
 
 	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/config"
 )
 
 type WebServer struct {
-	engine      *gin.Engine
-	interceptor ginext.Interceptor
-	cfg         *config.Config
-	api         *ApiServer
+	engine *gin.Engine
+	cfg    *config.Config
+	api    *ApiServer
 }
 
 func NewWebServer(
@@ -32,22 +29,14 @@ func NewWebServer(
 	}
 	ws := &WebServer{
 		engine: gin.New(),
-		interceptor: ginext.NewInterceptorWithOpts(
-			ginext.WithTracking(true),
-			ginext.WithTraffic(true),
-			ginext.WithMetrics(false),
-			ginext.WithTimeout(60*time.Second),
-		),
-		cfg: cfg,
-		api: apiServer,
+		cfg:    cfg,
+		api:    apiServer,
 	}
 
 	return ws
 }
 
 func (ws *WebServer) Init() error {
-	ws.interceptor.Apply(ws.engine)
-
 	if ws.cfg.Verbose {
 		ws.engine.Use(gin.Logger())
 	}

@@ -36,7 +36,7 @@
         "parameters": [
           {
             "name": "name",
-            "description": "@inject_tag: form:\"name\" binding:\"required\"",
+            "description": "@inject_tag: bind:\"query,name=name\" validate:\"required\" default:\"goer\"",
             "in": "query",
             "required": false,
             "type": "string"
@@ -67,7 +67,7 @@
         "parameters": [
           {
             "name": "key",
-            "description": "@inject_tag: form:\"name\" uri:\"key\" binding:\"required\"",
+            "description": "@inject_tag: bind:\"uri,name=key\" validate=\"required,min_len=1,max_len=64\"",
             "in": "path",
             "required": true,
             "type": "string"
@@ -98,12 +98,14 @@
         "parameters": [
           {
             "name": "username",
+            "description": "@inject_tag: bind:\"form,name=username\" validate:\"required,non_blank,min_len=2,pattern=#abc123\"",
             "in": "query",
             "required": false,
             "type": "string"
           },
           {
             "name": "password",
+            "description": "@inject_tag: bind:\"form,name=password\" validate:\"required,non_blank,min_len=6\"",
             "in": "query",
             "required": false,
             "type": "string"
@@ -133,12 +135,19 @@
         },
         "parameters": [
           {
-            "name": "body",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/appUploadImageRequest"
-            }
+            "name": "file",
+            "description": "@inject_tag: bind:\"file,name=file\" validate:\"required,min_len=1\"",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "byte"
+          },
+          {
+            "name": "key",
+            "description": "@inject_tag: bind:\"form,name=key\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [
@@ -167,20 +176,6 @@
     },
     "appLoginResponse": {
       "type": "object"
-    },
-    "appUploadImageRequest": {
-      "type": "object",
-      "properties": {
-        "filename": {
-          "type": "string",
-          "title": "the filename of the image"
-        },
-        "file": {
-          "type": "string",
-          "format": "byte",
-          "title": "the image file"
-        }
-      }
     },
     "appUploadImageResponse": {
       "type": "object",

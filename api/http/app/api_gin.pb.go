@@ -6,7 +6,7 @@ import (
 	context "context"
 	gin "github.com/gin-gonic/gin"
 	ginext "github.com/tenz-io/gokit/ginext"
-	metadata "google.golang.org/grpc/metadata"
+	metadata "github.com/tenz-io/gokit/ginext/metadata"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -39,22 +39,18 @@ type ApiServer struct {
 
 func (s *ApiServer) Hello_0(ctx *gin.Context) {
 	var in HelloRequest
-
-	if err := ginext.ShouldBind(ctx, &in); err != nil {
+	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
 	}
-	md := metadata.New(nil)
-	md.Set("path", ctx.Request.URL.Path)
-	md.Set("raw_query", ctx.Request.URL.RawQuery)
-	for k, v := range ctx.Request.URL.Query() {
-		md.Set(k, v...)
+
+	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
+		return s.server.(ApiServerHTTPServer).Hello(ctx, req.(*HelloRequest))
 	}
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
-	out, err := s.server.(ApiServerHTTPServer).Hello(newCtx, &in)
+
+	md := metadata.New(ctx, "ApiServerHTTPServer.Hello")
+	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
+	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
 	if err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
@@ -65,22 +61,18 @@ func (s *ApiServer) Hello_0(ctx *gin.Context) {
 
 func (s *ApiServer) Login_0(ctx *gin.Context) {
 	var in LoginRequest
-
-	if err := ginext.ShouldBind(ctx, &in); err != nil {
+	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
 	}
-	md := metadata.New(nil)
-	md.Set("path", ctx.Request.URL.Path)
-	md.Set("raw_query", ctx.Request.URL.RawQuery)
-	for k, v := range ctx.Request.URL.Query() {
-		md.Set(k, v...)
+
+	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
+		return s.server.(ApiServerHTTPServer).Login(ctx, req.(*LoginRequest))
 	}
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
-	out, err := s.server.(ApiServerHTTPServer).Login(newCtx, &in)
+
+	md := metadata.New(ctx, "ApiServerHTTPServer.Login")
+	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
+	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
 	if err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
@@ -91,22 +83,18 @@ func (s *ApiServer) Login_0(ctx *gin.Context) {
 
 func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
 	var in UploadImageRequest
-
-	if err := ginext.ShouldBind(ctx, &in); err != nil {
+	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
 	}
-	md := metadata.New(nil)
-	md.Set("path", ctx.Request.URL.Path)
-	md.Set("raw_query", ctx.Request.URL.RawQuery)
-	for k, v := range ctx.Request.URL.Query() {
-		md.Set(k, v...)
+
+	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
+		return s.server.(ApiServerHTTPServer).UploadImage(ctx, req.(*UploadImageRequest))
 	}
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
-	out, err := s.server.(ApiServerHTTPServer).UploadImage(newCtx, &in)
+
+	md := metadata.New(ctx, "ApiServerHTTPServer.UploadImage")
+	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
+	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
 	if err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
@@ -117,27 +105,18 @@ func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
 
 func (s *ApiServer) GetImage_0(ctx *gin.Context) {
 	var in GetImageRequest
-
-	if err := ginext.ShouldBindUri(ctx, &in); err != nil {
+	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
 	}
 
-	if err := ginext.ShouldBind(ctx, &in); err != nil {
-		ginext.ErrorResponse(ctx, err)
-		return
+	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
+		return s.server.(ApiServerHTTPServer).GetImage(ctx, req.(*GetImageRequest))
 	}
-	md := metadata.New(nil)
-	md.Set("path", ctx.Request.URL.Path)
-	md.Set("raw_query", ctx.Request.URL.RawQuery)
-	for k, v := range ctx.Request.URL.Query() {
-		md.Set(k, v...)
-	}
-	for k, v := range ctx.Request.Header {
-		md.Set(k, v...)
-	}
-	newCtx := metadata.NewIncomingContext(ctx.Request.Context(), md)
-	out, err := s.server.(ApiServerHTTPServer).GetImage(newCtx, &in)
+
+	md := metadata.New(ctx, "ApiServerHTTPServer.GetImage")
+	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
+	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
 	if err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
