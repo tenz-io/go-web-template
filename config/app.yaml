@@ -4,11 +4,11 @@ app:
   name: "go-web-template"
   port: 8081
   web: "./web"
-  secret: "<set in env>"
+  secret: "${APP_SECRET}"
 db:
   host: "localhost"
   port: 3306
   user: "root"
-  pass: "<set in env>"
+  pass: "${DB_PASS}"
   db: "mytest_db"
 

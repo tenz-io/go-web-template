@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/wire v0.6.0
 	github.com/stretchr/testify v1.9.0
-	github.com/tenz-io/gokit/cmd v1.0.7
+	github.com/tenz-io/gokit/cmd v1.0.8
 	github.com/tenz-io/gokit/genproto v1.0.4
 	github.com/tenz-io/gokit/ginext v1.0.22
 	github.com/tenz-io/gokit/logger v1.5.3

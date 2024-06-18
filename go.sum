@@ -96,8 +96,8 @@ github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsT
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 github.com/tenz-io/gokit/annotation v1.0.8 h1:Uzx2ZivRE6HU5s58BqI5HWTeb1DYx8nnsav2l2Mf00U=
 github.com/tenz-io/gokit/annotation v1.0.8/go.mod h1:J4pgK32PQxNdoaitp/MbtgcTVpwQld/dxAB9qaBAcZM=
-github.com/tenz-io/gokit/cmd v1.0.7 h1:AArzxOeCVZPly8TLWHw8C2T8LjPTWxuLU0AkXfsHGO4=
-github.com/tenz-io/gokit/cmd v1.0.7/go.mod h1:D1HgESIWOcqgjZMl4M/nF90QIf3CT3r5EzysykYj47E=
+github.com/tenz-io/gokit/cmd v1.0.8 h1:7hNeOAMWSJfiEeA62mYW0BQL5EeGwvlIzK7/kWTde4A=
+github.com/tenz-io/gokit/cmd v1.0.8/go.mod h1:YZjEs1IwKNicl+4udPS8Uh5Td2la0QndYnuD8NgcZr8=
 github.com/tenz-io/gokit/functional v1.0.0 h1:4IKtEhmYZajz2ZYOQjllWdlmvB2qO/xcT4AyQMKm1j0=
 github.com/tenz-io/gokit/functional v1.0.0/go.mod h1:HmucrWRa/zOjRtVyiDDB/aPyTJSx6bp2bitjO+9Objw=
 github.com/tenz-io/gokit/genproto v1.0.4 h1:FMbmyKDXg0ungG+diNC8yX6xndofP234Hh1jmATOicQ=
