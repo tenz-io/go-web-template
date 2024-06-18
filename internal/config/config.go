@@ -8,9 +8,10 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Name string `yaml:"name" json:"name"`
-	Port int    `yaml:"port" json:"port"`
-	Web  string `yaml:"web" json:"web"`
+	Name   string `yaml:"name" json:"name"`
+	Port   int    `yaml:"port" json:"port"`
+	Web    string `yaml:"web" json:"web"`
+	Secret string `yaml:"secret" json:"secret"`
 }
 
 type DBConfig struct {

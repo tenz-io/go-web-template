@@ -4,6 +4,7 @@ app:
   name: "go-web-template"
   port: 8081
   web: "./web"
+  secret: "<set in env>"
 db:
   host: "localhost"
   port: 3306

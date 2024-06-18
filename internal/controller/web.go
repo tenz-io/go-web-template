@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tenz-io/gokit/ginext"
 
 	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/config"
@@ -41,6 +42,10 @@ func (ws *WebServer) Init() error {
 		ws.engine.Use(gin.Logger())
 	}
 
+	// set app secret key
+	ginext.InitJWT(ws.cfg.App.Secret)
+
+	// register middleware template and static
 	tmplPattern := strings.Join([]string{
 		ws.cfg.App.Web,
 		"*.html",

@@ -58,7 +58,10 @@ func updateConfig() cmd.InitFunc {
 		if c.IsSet("port") {
 			conf.App.Port = c.Int("port")
 		}
+
+		// set config from env
 		conf.DB.Pass = os.Getenv("DB_PASS")
+		conf.App.Secret = os.Getenv("APP_SECRET")
 
 		return func(_ *cmd.Context) {
 			log.Println("close server on port:", conf.App.Port)
