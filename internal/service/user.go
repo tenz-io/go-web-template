@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"go-web-template/internal/constant"
 	"go-web-template/internal/model"
 	"go-web-template/internal/repository"
 )
@@ -33,6 +34,8 @@ func (u *user) GetByName(ctx context.Context, name string) (model.User, error) {
 	}
 
 	return model.User{
+		Userid:   123,
+		Role:     constant.RoleAdmin,
 		Username: name,
 		Profile:  userProfile,
 	}, nil

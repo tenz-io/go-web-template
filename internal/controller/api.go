@@ -5,7 +5,9 @@ import (
 	"crypto/md5"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/tenz-io/gokit/ginext"
 	"github.com/tenz-io/gokit/ginext/errcode"
 	"github.com/tenz-io/gokit/ginext/metadata"
 	"github.com/tenz-io/gokit/logger"
@@ -49,11 +51,10 @@ func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*p
 
 func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
 	var (
-		meta, existing = metadata.FromContext(ctx)
-		le             = logger.FromContext(ctx).WithFields(logger.Fields{
+		meta = metadata.SafeFromContext(ctx)
+		le   = logger.FromContext(ctx).WithFields(logger.Fields{
 			"username": request.GetUsername(),
 			"meta":     meta,
-			"existing": existing,
 		})
 	)
 
@@ -61,25 +62,33 @@ func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*p
 		le.Debug("login called")
 	}()
 
-	_, err := as.userService.GetByName(ctx, request.GetUsername())
+	user, err := as.userService.GetByName(ctx, request.GetUsername())
 	if err != nil {
 		return nil, errcode.NotFound(http.StatusOK, "user not found")
 	}
 
-	if request.Username == request.Password {
-		return &pbapp.LoginResponse{}, nil
+	// mock login
+	if request.Username != request.Password {
+		return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
 	}
 
-	return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
+	expiredAt := time.Now().Add(15 * time.Minute)
+	token, err := ginext.GenerateToken(user.Userid, int32(user.Role), expiredAt)
+	if err != nil {
+		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
+	}
+
+	return &pbapp.LoginResponse{
+		Token: token,
+	}, nil
 }
 
 func (as *ApiServer) GetImage(ctx context.Context, request *pbapp.GetImageRequest) (*pbapp.GetImageResponse, error) {
 	var (
-		meta, existing = metadata.FromContext(ctx)
-		le             = logger.FromContext(ctx).WithFields(logger.Fields{
-			"meta":     meta,
-			"existing": existing,
-			"key":      request.GetKey(),
+		meta = metadata.SafeFromContext(ctx)
+		le   = logger.FromContext(ctx).WithFields(logger.Fields{
+			"meta": meta,
+			"key":  request.GetKey(),
 		})
 	)
 
@@ -90,10 +99,9 @@ func (as *ApiServer) GetImage(ctx context.Context, request *pbapp.GetImageReques
 
 func (as *ApiServer) UploadImage(ctx context.Context, request *pbapp.UploadImageRequest) (*pbapp.UploadImageResponse, error) {
 	var (
-		meta, existing = metadata.FromContext(ctx)
-		le             = logger.FromContext(ctx).WithFields(logger.Fields{
+		meta = metadata.SafeFromContext(ctx)
+		le   = logger.FromContext(ctx).WithFields(logger.Fields{
 			"meta":      meta,
-			"existing":  existing,
 			"file_size": len(request.GetFile()),
 		})
 		key = request.GetKey()

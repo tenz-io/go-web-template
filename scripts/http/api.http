@@ -1,5 +1,3 @@
-### hello
-GET localhost:8090/hello/?name=John
 
 ### login
 POST localhost:8090/login
@@ -7,15 +5,22 @@ Content-Type: application/json
 
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "admin"
 }
+
+### hello
+GET localhost:8090/hello
+Authorization: Bearer {{token}}
+
 
 ### get image
 GET localhost:8090/image/f4636813f0571a3fc035af92f61bcd0c
+Authorization: Bearer {{token}}
 
 
 ### upload image
 POST localhost:8090/upload/image
+Authorization: Bearer {{token}}
 Content-Type: multipart/form-data; boundary=xxxxyyyyzzzz
 
 --xxxxyyyyzzzz

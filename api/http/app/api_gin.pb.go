@@ -37,28 +37,6 @@ type ApiServer struct {
 	router gin.IRouter
 }
 
-func (s *ApiServer) Hello_0(ctx *gin.Context) {
-	var in HelloRequest
-	if err := ginext.BindAndValidate(ctx, &in); err != nil {
-		ginext.ErrorResponse(ctx, err)
-		return
-	}
-
-	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
-		return s.server.(ApiServerHTTPServer).Hello(ctx, req.(*HelloRequest))
-	}
-
-	md := metadata.New(ctx, "ApiServerHTTPServer.Hello")
-	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
-	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
-	if err != nil {
-		ginext.ErrorResponse(ctx, err)
-		return
-	}
-
-	ginext.Response(ctx, out)
-}
-
 func (s *ApiServer) Login_0(ctx *gin.Context) {
 	var in LoginRequest
 	if err := ginext.BindAndValidate(ctx, &in); err != nil {
@@ -81,18 +59,18 @@ func (s *ApiServer) Login_0(ctx *gin.Context) {
 	ginext.Response(ctx, out)
 }
 
-func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
-	var in UploadImageRequest
+func (s *ApiServer) Hello_0(ctx *gin.Context) {
+	var in HelloRequest
 	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
 		return
 	}
 
 	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
-		return s.server.(ApiServerHTTPServer).UploadImage(ctx, req.(*UploadImageRequest))
+		return s.server.(ApiServerHTTPServer).Hello(ctx, req.(*HelloRequest))
 	}
 
-	md := metadata.New(ctx, "ApiServerHTTPServer.UploadImage")
+	md := metadata.New(ctx, "ApiServerHTTPServer.Hello")
 	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
 	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
 	if err != nil {
@@ -125,14 +103,36 @@ func (s *ApiServer) GetImage_0(ctx *gin.Context) {
 	ginext.Response(ctx, out)
 }
 
+func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
+	var in UploadImageRequest
+	if err := ginext.BindAndValidate(ctx, &in); err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+
+	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
+		return s.server.(ApiServerHTTPServer).UploadImage(ctx, req.(*UploadImageRequest))
+	}
+
+	md := metadata.New(ctx, "ApiServerHTTPServer.UploadImage")
+	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
+	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
+	if err != nil {
+		ginext.ErrorResponse(ctx, err)
+		return
+	}
+
+	ginext.Response(ctx, out)
+}
+
 func (s *ApiServer) RegisterService() {
 
-	s.router.Handle("GET", "/hello", s.Hello_0)
+	s.router.Handle("POST", "/login", ginext.Authenticate(0), s.Login_0)
 
-	s.router.Handle("POST", "/login", s.Login_0)
+	s.router.Handle("GET", "/hello", ginext.Authenticate(2), s.Hello_0)
 
-	s.router.Handle("POST", "/upload/image", s.UploadImage_0)
+	s.router.Handle("GET", "/image/:key", ginext.Authenticate(2), s.GetImage_0)
 
-	s.router.Handle("GET", "/image/:key", s.GetImage_0)
+	s.router.Handle("POST", "/upload/image", ginext.Authenticate(1), s.UploadImage_0)
 
 }

@@ -105,7 +105,7 @@
           },
           {
             "name": "password",
-            "description": "@inject_tag: bind:\"form,name=password\" validate:\"required,non_blank,min_len=6\"",
+            "description": "@inject_tag: bind:\"form,name=password\" validate:\"required,non_blank,min_len=4\"",
             "in": "query",
             "required": false,
             "type": "string"
@@ -175,7 +175,12 @@
       }
     },
     "appLoginResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
     },
     "appUploadImageResponse": {
       "type": "object",

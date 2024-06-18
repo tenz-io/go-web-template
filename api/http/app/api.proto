@@ -5,29 +5,53 @@ option go_package = "go-web-template/api/http/app;app";
 package http.app;
 
 import "google/api/annotations.proto";
+import "custom/common/authz.proto";
 
 
 service ApiServer {
-  rpc Hello(HelloRequest) returns (HelloResponse) {
-    option (google.api.http) = {
-      get: "/hello"
-    };
-  }
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
       post: "/login"
     };
+    option (custom.common.auth) = {
+      role: ANONYMOUS
+    };
   }
-  rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {
+  rpc Hello(HelloRequest) returns (HelloResponse) {
     option (google.api.http) = {
-      post: "/upload/image"
+      get: "/hello"
+    };
+    option (custom.common.auth) = {
+      role: USER
     };
   }
   rpc GetImage(GetImageRequest) returns (GetImageResponse) {
     option (google.api.http) = {
       get: "/image/{key}"
     };
+    option (custom.common.auth) = {
+      role: USER
+    };
   }
+  rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {
+    option (google.api.http) = {
+      post: "/upload/image"
+    };
+    option (custom.common.auth) = {
+      role: ADMIN
+    };
+  }
+}
+
+message LoginRequest {
+  // @inject_tag: bind:"form,name=username" validate:"required,non_blank,min_len=2,pattern=#abc123"
+  string username = 1;
+  // @inject_tag: bind:"form,name=password" validate:"required,non_blank,min_len=4"
+  string password = 2;
+}
+
+message LoginResponse {
+  string token = 2;
 }
 
 message HelloRequest {
@@ -39,14 +63,13 @@ message HelloResponse {
   string message = 1;
 }
 
-message LoginRequest {
-  // @inject_tag: bind:"form,name=username" validate:"required,non_blank,min_len=2,pattern=#abc123"
-  string username = 1;
-  // @inject_tag: bind:"form,name=password" validate:"required,non_blank,min_len=6"
-  string password = 2;
+message GetImageRequest {
+  // @inject_tag: bind:"uri,name=key" validate="required,min_len=1,max_len=64"
+  string key = 1;
 }
 
-message LoginResponse {
+message GetImageResponse {
+  bytes file = 1;
 }
 
 message UploadImageRequest {
@@ -58,14 +81,5 @@ message UploadImageRequest {
 
 message UploadImageResponse {
   string key = 1;
-}
-
-message GetImageRequest {
-  // @inject_tag: bind:"uri,name=key" validate="required,min_len=1,max_len=64"
-  string key = 1;
-}
-
-message GetImageResponse {
-  bytes file = 1;
 }
 
