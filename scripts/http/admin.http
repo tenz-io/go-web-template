@@ -1,6 +1,6 @@
 
 ### login
-POST localhost:8090/api/login
+POST localhost:8090/admin/login
 Content-Type: application/json
 
 {
@@ -8,19 +8,20 @@ Content-Type: application/json
   "password": "admin"
 }
 
-### hello
-GET localhost:8090/api/hello
-Authorization: Bearer {{access_token}}
+### add token
+POST localhost:8090/admin/add_token
+Content-Type: application/json
+Cookie: token={{admin_access_token}}
 
-
-### get image
-GET localhost:8090/api/image/f4636813f0571a3fc035af92f61bcd0c
-Authorization: Bearer {{access_token}}
+{
+  "userid": 123456,
+  "expire": 30
+}
 
 
 ### upload image
-POST localhost:8090/api/upload/image
-Authorization: Bearer {{access_token}}
+POST localhost:8090/admin/upload/image
+Cookie: token={{admin_access_token}}
 Content-Type: multipart/form-data; boundary=xxxxyyyyzzzz
 
 --xxxxyyyyzzzz

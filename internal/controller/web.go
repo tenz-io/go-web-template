@@ -17,11 +17,13 @@ type WebServer struct {
 	engine *gin.Engine
 	cfg    *config.Config
 	api    *ApiServer
+	admin  *AdminServer
 }
 
 func NewWebServer(
 	cfg *config.Config,
 	apiServer *ApiServer,
+	adminServer *AdminServer,
 ) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
@@ -32,6 +34,7 @@ func NewWebServer(
 		engine: gin.New(),
 		cfg:    cfg,
 		api:    apiServer,
+		admin:  adminServer,
 	}
 
 	return ws
@@ -63,6 +66,7 @@ func (ws *WebServer) Init() error {
 	ws.registerHomepage(baseGrp)
 
 	pbapp.RegisterApiServerHTTPServer(ws.engine, ws.api)
+	pbapp.RegisterAdminServerHTTPServer(ws.engine, ws.admin)
 
 	return nil
 }

@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/tenz-io/gokit/cmd v1.0.8
 	github.com/tenz-io/gokit/genproto v1.0.4
-	github.com/tenz-io/gokit/ginext v1.0.22
+	github.com/tenz-io/gokit/ginext v1.0.30
 	github.com/tenz-io/gokit/logger v1.5.3
 	google.golang.org/genproto/googleapis/api v0.0.0-20240506185236-b8a5c65736ae
 	google.golang.org/protobuf v1.34.2

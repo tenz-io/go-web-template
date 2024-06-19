@@ -32,23 +32,6 @@ func NewApiServer(
 	}
 }
 
-func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
-	var (
-		le = logger.FromContext(ctx)
-	)
-	defer func() {
-		le.Debug("hello called")
-	}()
-
-	user, err := as.userService.GetByName(ctx, request.GetName())
-	if err != nil {
-		return nil, err
-	}
-	return &pbapp.HelloResponse{
-		Message: user.Profile,
-	}, nil
-}
-
 func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*pbapp.LoginResponse, error) {
 	var (
 		meta = metadata.SafeFromContext(ctx)
@@ -73,13 +56,35 @@ func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*p
 	}
 
 	expiredAt := time.Now().Add(15 * time.Minute)
-	token, err := ginext.GenerateToken(user.Userid, int32(user.Role), expiredAt)
+	accessToken, err := ginext.GenerateToken(user.Userid, int32(user.Role), ginext.TokenTypeAccess, expiredAt)
+	if err != nil {
+		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
+	}
+	refreshToken, err := ginext.GenerateToken(user.Userid, int32(user.Role), ginext.TokenTypeRefresh, time.Now().Add(60*24*time.Hour))
 	if err != nil {
 		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
 	}
 
 	return &pbapp.LoginResponse{
-		Token: token,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}, nil
+}
+
+func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
+	var (
+		le = logger.FromContext(ctx)
+	)
+	defer func() {
+		le.Debug("hello called")
+	}()
+
+	user, err := as.userService.GetByName(ctx, request.GetName())
+	if err != nil {
+		return nil, err
+	}
+	return &pbapp.HelloResponse{
+		Message: user.Profile,
 	}, nil
 }
 

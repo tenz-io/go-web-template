@@ -18,5 +18,6 @@ var ServiceProviderSet = wire.NewSet(
 
 var ControllerProviderSet = wire.NewSet(
 	controller.NewApiServer,
+	controller.NewAdminServer,
 	controller.NewWebServer,
 )

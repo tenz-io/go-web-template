@@ -1,12 +1,12 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "http/app/api.proto",
+    "title": "http/app/admin.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "ApiServer"
+      "name": "AdminServer"
     }
   ],
   "consumes": [
@@ -16,14 +16,14 @@
     "application/json"
   ],
   "paths": {
-    "/api/hello": {
-      "get": {
-        "operationId": "ApiServer_Hello",
+    "/admin/add_token": {
+      "post": {
+        "operationId": "AdminServer_AddToken",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/appHelloResponse"
+              "$ref": "#/definitions/appAdminAddTokenResponse"
             }
           },
           "default": {
@@ -35,57 +35,35 @@
         },
         "parameters": [
           {
-            "name": "name",
-            "description": "@inject_tag: bind:\"query,name=name\" validate:\"required\" default:\"goer\"",
+            "name": "userid",
+            "description": "@inject_tag: bind:\"form,name=userid\" validate=\"required,gt=0\"",
             "in": "query",
             "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "ApiServer"
-        ]
-      }
-    },
-    "/api/image/{key}": {
-      "get": {
-        "operationId": "ApiServer_GetImage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/appGetImageResponse"
-            }
+            "type": "string",
+            "format": "int64"
           },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
           {
-            "name": "key",
-            "description": "@inject_tag: bind:\"uri,name=key\" validate=\"required,min_len=1,max_len=64\"",
-            "in": "path",
-            "required": true,
-            "type": "string"
+            "name": "expire",
+            "description": "@inject_tag: bind:\"form,name=expire\" validate=\"required,gt=0\" default:\"60\"\n\nexpire time in days",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
           }
         ],
         "tags": [
-          "ApiServer"
+          "AdminServer"
         ]
       }
     },
-    "/api/login": {
+    "/admin/login": {
       "post": {
-        "operationId": "ApiServer_Login",
+        "operationId": "AdminServer_Login",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/appLoginResponse"
+              "$ref": "#/definitions/appAdminLoginResponse"
             }
           },
           "default": {
@@ -112,18 +90,18 @@
           }
         ],
         "tags": [
-          "ApiServer"
+          "AdminServer"
         ]
       }
     },
-    "/api/upload/image": {
+    "/admin/upload/image": {
       "post": {
-        "operationId": "ApiServer_UploadImage",
+        "operationId": "AdminServer_UploadImage",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/appUploadImageResponse"
+              "$ref": "#/definitions/appAdminUploadImageResponse"
             }
           },
           "default": {
@@ -151,41 +129,24 @@
           }
         ],
         "tags": [
-          "ApiServer"
+          "AdminServer"
         ]
       }
     }
   },
   "definitions": {
-    "appGetImageResponse": {
-      "type": "object",
-      "properties": {
-        "file": {
-          "type": "string",
-          "format": "byte"
-        }
-      }
-    },
-    "appHelloResponse": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "type": "string"
-        }
-      }
-    },
-    "appLoginResponse": {
+    "appAdminAddTokenResponse": {
       "type": "object",
       "properties": {
         "access_token": {
           "type": "string"
-        },
-        "refresh_token": {
-          "type": "string"
         }
       }
     },
-    "appUploadImageResponse": {
+    "appAdminLoginResponse": {
+      "type": "object"
+    },
+    "appAdminUploadImageResponse": {
       "type": "object",
       "properties": {
         "key": {

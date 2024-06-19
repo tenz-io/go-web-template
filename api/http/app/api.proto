@@ -11,7 +11,7 @@ import "custom/common/authz.proto";
 service ApiServer {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (google.api.http) = {
-      post: "/login"
+      post: "/api/login"
     };
     option (custom.common.auth) = {
       role: ANONYMOUS
@@ -19,26 +19,29 @@ service ApiServer {
   }
   rpc Hello(HelloRequest) returns (HelloResponse) {
     option (google.api.http) = {
-      get: "/hello"
+      get: "/api/hello"
     };
     option (custom.common.auth) = {
       role: USER
+      type: REST
     };
   }
   rpc GetImage(GetImageRequest) returns (GetImageResponse) {
     option (google.api.http) = {
-      get: "/image/{key}"
+      get: "/api/image/{key}"
     };
     option (custom.common.auth) = {
       role: USER
+      type: REST
     };
   }
   rpc UploadImage(UploadImageRequest) returns (UploadImageResponse) {
     option (google.api.http) = {
-      post: "/upload/image"
+      post: "/api/upload/image"
     };
     option (custom.common.auth) = {
-      role: ADMIN
+      role: USER
+      type: REST
     };
   }
 }
@@ -51,7 +54,8 @@ message LoginRequest {
 }
 
 message LoginResponse {
-  string token = 2;
+  string access_token = 1;
+  string refresh_token = 2;
 }
 
 message HelloRequest {
