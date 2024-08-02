@@ -3,6 +3,8 @@ package repository
 import (
 	"context"
 	"fmt"
+
+	"go-web-template/internal/config"
 )
 
 // User is the interface that provides user methods.
@@ -17,6 +19,7 @@ func NewUser() User {
 }
 
 type user struct {
+	cfg *config.Config
 }
 
 func (u *user) UserProfile(_ context.Context, name string) (profile string, err error) {

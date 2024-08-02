@@ -32,11 +32,11 @@ func NewAdminServer(
 	}
 }
 
-func (a *AdminServer) Login(ctx context.Context, request *pbapp.AdminLoginRequest) (*pbapp.AdminLoginResponse, error) {
+func (a *AdminServer) Login(ctx context.Context, req *pbapp.AdminLoginRequest) (*pbapp.AdminLoginResponse, error) {
 	var (
 		meta = metadata.SafeFromContext(ctx)
 		le   = logger.FromContext(ctx).WithFields(logger.Fields{
-			"username": request.GetUsername(),
+			"username": req.GetUsername(),
 			"meta":     meta,
 		})
 	)
@@ -45,18 +45,13 @@ func (a *AdminServer) Login(ctx context.Context, request *pbapp.AdminLoginReques
 		le.Debug("login called")
 	}()
 
-	user, err := a.userService.GetByName(ctx, request.GetUsername())
-	if err != nil {
-		return nil, errcode.NotFound(http.StatusOK, "user not found")
-	}
-
-	// mock login
-	if request.Username != request.Password {
-		return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
+	ok, _ := a.userService.VerifyAdmin(ctx, req.GetUsername(), req.GetPassword())
+	if !ok {
+		return nil, errcode.Unauthorized(http.StatusOK, "auth failed")
 	}
 
 	expiredAt := time.Now().Add(15 * time.Minute)
-	accessToken, err := ginext.GenerateToken(user.Userid, ginext.RoleAdmin, ginext.TokenTypeAccess, expiredAt)
+	accessToken, err := ginext.GenerateToken(1, ginext.RoleAdmin, ginext.TokenTypeAccess, expiredAt)
 	if err != nil {
 		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
 	}

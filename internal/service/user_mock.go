@@ -38,6 +38,30 @@ func (_m *MockUser) GetByName(ctx context.Context, name string) (model.User, err
 	return r0, r1
 }
 
+// VerifyAdmin provides a mock function with given fields: ctx, name, pass
+func (_m *MockUser) VerifyAdmin(ctx context.Context, name string, pass string) (bool, error) {
+	ret := _m.Called(ctx, name, pass)
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (bool, error)); ok {
+		return rf(ctx, name, pass)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = rf(ctx, name, pass)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, pass)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewMockUser creates a new instance of MockUser. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockUser(t interface {

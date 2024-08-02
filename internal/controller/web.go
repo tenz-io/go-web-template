@@ -65,6 +65,9 @@ func (ws *WebServer) Init() error {
 	baseGrp := ws.engine.Group("")
 	ws.registerHomepage(baseGrp)
 
+	adminBaseGrp := ws.engine.Group("admin")
+	ws.registerAdminPages(adminBaseGrp)
+
 	pbapp.RegisterApiServerHTTPServer(ws.engine, ws.api)
 	pbapp.RegisterAdminServerHTTPServer(ws.engine, ws.admin)
 
@@ -74,6 +77,20 @@ func (ws *WebServer) Init() error {
 func (ws *WebServer) registerHomepage(rg *gin.RouterGroup) {
 	rg.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", gin.H{
+			"name": ws.cfg.App.Name,
+		})
+	})
+}
+
+func (ws *WebServer) registerAdminPages(rg *gin.RouterGroup) {
+	rg.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_index.html", gin.H{
+			"name": ws.cfg.App.Name,
+		})
+	})
+
+	rg.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_login.html", gin.H{
 			"name": ws.cfg.App.Name,
 		})
 	})
