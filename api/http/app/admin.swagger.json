@@ -87,6 +87,13 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "referer",
+            "description": "@inject_tag: bind:\"header,name=X-Referer\"",
+            "in": "query",
+            "required": false,
+            "type": "string"
           }
         ],
         "tags": [

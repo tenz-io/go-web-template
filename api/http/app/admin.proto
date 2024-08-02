@@ -42,6 +42,8 @@ message AdminLoginRequest {
   string username = 1;
   // @inject_tag: bind:"form,name=password" validate:"required,non_blank,min_len=4"
   string password = 2;
+  // @inject_tag: bind:"header,name=X-Referer"
+  string referer = 3;
 }
 
 message AdminLoginResponse {

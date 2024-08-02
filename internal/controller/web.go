@@ -75,19 +75,25 @@ func (ws *WebServer) Init() error {
 }
 
 func (ws *WebServer) registerHomepage(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"name": ws.cfg.App.Name,
+	rg.GET("/",
+		RedirectHandler("/login"),
+		ginext.Authenticate(ginext.RoleUser, ginext.AuthTypeWeb),
+		func(c *gin.Context) {
+			c.HTML(http.StatusOK, "index.html", gin.H{
+				"name": ws.cfg.App.Name,
+			})
 		})
-	})
 }
 
 func (ws *WebServer) registerAdminPages(rg *gin.RouterGroup) {
-	rg.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_index.html", gin.H{
-			"name": ws.cfg.App.Name,
+	rg.GET("/",
+		RedirectHandler("/admin/login"),
+		ginext.Authenticate(ginext.RoleAdmin, ginext.AuthTypeWeb),
+		func(c *gin.Context) {
+			c.HTML(http.StatusOK, "admin_index.html", gin.H{
+				"name": ws.cfg.App.Name,
+			})
 		})
-	})
 
 	rg.GET("/login", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "admin_login.html", gin.H{
@@ -103,5 +109,18 @@ func (ws *WebServer) Run(errC chan<- error) {
 	if err != nil {
 		errC <- err
 	}
+}
 
+// RedirectHandler handler
+func RedirectHandler(location string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		c.Next()
+
+		// if response status is 401, redirect to login page
+		if c.Writer.Status() == http.StatusUnauthorized {
+			c.Redirect(http.StatusTemporaryRedirect, location)
+			c.Abort()
+			return
+		}
+	}
 }
