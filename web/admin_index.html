@@ -8,6 +8,58 @@
     <title>Admin Homepage</title>
 </head>
 <body>
-<h1>Welcome admin to {{.name}}!</h1>
+<h1> {{.name}}: Add User access token!</h1>
+<form id="addTokenForm">
+    <label for="userid">User ID:</label><br>
+    <input type="number" id="userid" name="userid" value="123" required><br>
+    <label for="expire">Expire (days):</label><br>
+    <input type="number" id="expire" name="expire" value="60" required><br><br>
+    <input type="submit" value="Submit">
+</form>
+<p id="responseMessage" style="color: green; display: none;"></p>
+<p id="errorMessage" style="color: red; display: none;">Failed to add token. Please try again.</p>
+
+
+<script>
+    document.getElementById('addTokenForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const userid = document.getElementById('userid').value;
+        const expire = document.getElementById('expire').value;
+
+        fetch('/admin/add_token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({userid: parseInt(userid), expire: parseInt(expire)})
+        })
+            .then(response => {
+                console.log('Response:', response);
+                if (response.status !== 200) {
+                    throw new Error('Failed to add token');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data:', data);
+                if (data.code === 0) {
+                    document.getElementById('responseMessage').textContent = 'Access Token:  ' + data.data.access_token;
+                    document.getElementById('responseMessage').style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
+                } else {
+                    document.getElementById('errorMessage').style.display = 'block';
+                    document.getElementById('responseMessage').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('responseMessage').style.display = 'none';
+            });
+    });
+</script>
+
+
 </body>
 </html>

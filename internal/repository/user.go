@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
-	"go-web-template/internal/model"
 
 	"go-web-template/internal/config"
+	"go-web-template/internal/model"
 )
 
 // User is the interface that provides user methods.

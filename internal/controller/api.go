@@ -4,10 +4,11 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
+	"net/http"
+
 	"github.com/tenz-io/gokit/ginext/errcode"
 	"github.com/tenz-io/gokit/ginext/metadata"
 	"github.com/tenz-io/gokit/logger"
-	"net/http"
 
 	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/repository"
