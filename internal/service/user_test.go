@@ -2,98 +2,92 @@ package service
 
 import (
 	"context"
-	"fmt"
-	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"go-web-template/internal/model"
+	"go-web-template/internal/config"
 	"go-web-template/internal/repository"
 )
 
-func Test_user_GetByName(t *testing.T) {
+func Test_user_VerifyAdmin(t *testing.T) {
 	type fields struct {
+		cfg     *config.Config
 		useRepo repository.User
 	}
 	type args struct {
 		ctx  context.Context
 		name string
+		pass string
 	}
-	type behavior func(fields, args)
 	tests := []struct {
-		name     string
-		fields   fields
-		args     args
-		behavior behavior
-		want     model.User
-		hasErr   assert.ErrorAssertionFunc
+		name    string
+		fields  fields
+		args    args
+		wantOk  bool
+		wantErr bool
 	}{
 		{
-			name: "when user profile is found then return user",
+			name: "empty name or pass",
 			fields: fields{
-				useRepo: repository.NewMockUser(t),
+				cfg: &config.Config{},
 			},
 			args: args{
 				ctx:  context.Background(),
-				name: "Gopher",
+				name: "",
+				pass: "",
 			},
-			behavior: func(fields fields, args args) {
-				var (
-					userRepo = fields.useRepo.(*repository.MockUser)
-				)
-
-				userRepo.On("UserProfile", args.ctx, args.name).
-					Return(fmt.Sprintf("hi %s", args.name), nil).
-					Times(1)
-
-			},
-			want: model.User{
-				Username: "Gopher",
-				Profile:  "hi Gopher",
-			},
-			hasErr: assert.NoError,
+			wantOk:  false,
+			wantErr: true,
 		},
 		{
-			name: "when user profile is not found then return error",
+			name: "admin verified",
 			fields: fields{
-				useRepo: repository.NewMockUser(t),
+				cfg: &config.Config{
+					App: config.AppConfig{
+						AdminUser: "admin",
+						AdminPass: "admin123",
+					},
+				},
 			},
 			args: args{
 				ctx:  context.Background(),
-				name: "Gopher",
+				name: "admin",
+				pass: "admin123",
 			},
-			behavior: func(fields fields, args args) {
-				var (
-					userRepo = fields.useRepo.(*repository.MockUser)
-				)
-
-				userRepo.On("UserProfile", args.ctx, args.name).
-					Return("", fmt.Errorf("not found")).
-					Times(1)
+			wantOk:  true,
+			wantErr: false,
+		},
+		{
+			name: "admin verify failed",
+			fields: fields{
+				cfg: &config.Config{
+					App: config.AppConfig{
+						AdminUser: "admin",
+						AdminPass: "admin123",
+					},
+				},
 			},
-			want:   model.User{},
-			hasErr: assert.Error,
+			args: args{
+				ctx:  context.Background(),
+				name: "admin",
+				pass: "admin",
+			},
+			wantOk:  false,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// mock
-			tt.behavior(tt.fields, tt.args)
-
 			u := &user{
+				cfg:     tt.fields.cfg,
 				useRepo: tt.fields.useRepo,
 			}
-
-			got, err := u.GetByName(tt.args.ctx, tt.args.name)
-
-			// assert
-			if tt.hasErr(t, err, "user.GetByName() error = %v, wantErr %v") {
+			gotOk, err := u.VerifyAdmin(tt.args.ctx, tt.args.name, tt.args.pass)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("VerifyAdmin() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetByName() got = %v, want %v", got, tt.want)
-				return
+			if gotOk != tt.wantOk {
+				t.Errorf("VerifyAdmin() gotOk = %v, want %v", gotOk, tt.wantOk)
 			}
 		})
 	}

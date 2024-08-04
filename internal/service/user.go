@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/tenz-io/gokit/logger"
 
@@ -35,6 +36,12 @@ func (u *user) VerifyAdmin(ctx context.Context, name, pass string) (ok bool, err
 	var (
 		le = logger.FromContext(ctx)
 	)
+
+	if name == "" || pass == "" {
+		le.Debug("admin verify failed")
+		return false, fmt.Errorf("empty name or pass")
+	}
+
 	if name == u.cfg.App.AdminUser && pass == u.cfg.App.AdminPass {
 		le.Debug("admin verified")
 		return true, nil
