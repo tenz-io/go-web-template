@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"go-web-template/internal/model"
 
 	"go-web-template/internal/config"
 )
@@ -11,7 +12,7 @@ import (
 //
 //go:generate mockery --name User --filename user_mock.go --inpackage
 type User interface {
-	UserProfile(ctx context.Context, name string) (profile string, err error)
+	GetByName(ctx context.Context, name string) (model.User, error)
 }
 
 func NewUser() User {
@@ -22,6 +23,10 @@ type user struct {
 	cfg *config.Config
 }
 
-func (u *user) UserProfile(_ context.Context, name string) (profile string, err error) {
-	return fmt.Sprintf("my name is %s", name), nil
+func (u *user) GetByName(_ context.Context, name string) (model.User, error) {
+	return model.User{
+		Userid:   123, // TODO replace with real user id
+		Username: name,
+		Profile:  fmt.Sprintf("profile of %s", name),
+	}, nil
 }

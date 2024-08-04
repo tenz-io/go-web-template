@@ -1,21 +1,50 @@
-<!-- index.html -->
+<!-- admin_index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Admin Homepage</title>
+    <title>Admin Login</title>
 </head>
 <body>
-<h1>login admin to {{.name}}!</h1>
-<!-- help write a login form post  -->
-<form action="/admin/login" method="post">
+<h1>Login to Admin</h1>
+<form id="loginForm">
     <label for="username">Username:</label><br>
-    <input type="text" id="username" name="username"><br>
+    <input type="text" id="username" name="username" required><br>
     <label for="password">Password:</label><br>
-    <input type="password" id="password" name="password"><br><br>
+    <input type="password" id="password" name="password" required><br><br>
     <input type="submit" value="Submit">
 </form>
+<p id="errorMessage" style="color: red; display: none;">Login failed. Please try again.</p>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+
+        fetch('/admin/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({username: username, password: password})
+        })
+            .then(response => {
+                if (response.status === 200) {
+                    window.location.href = '/admin/';
+                } else {
+                    // {"code":200,"message":"auth failed","data":{}} is returned
+                    console.log('Response:', response);
+                    document.getElementById('errorMessage').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    });
+</script>
 </body>
 </html>

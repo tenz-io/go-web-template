@@ -103,7 +103,7 @@ func (s *ApiServer) GetImage_0(ctx *gin.Context) {
 	ginext.Response(ctx, out)
 }
 
-func (s *ApiServer) UploadImage_1(ctx *gin.Context) {
+func (s *ApiServer) UploadImage_0(ctx *gin.Context) {
 	var in UploadImageRequest
 	if err := ginext.BindAndValidate(ctx, &in); err != nil {
 		ginext.ErrorResponse(ctx, err)
@@ -133,6 +133,6 @@ func (s *ApiServer) RegisterService() {
 
 	s.router.Handle("GET", "/api/image/:key", ginext.Authenticate(2, 1), s.GetImage_0)
 
-	s.router.Handle("POST", "/api/upload/image", ginext.Authenticate(2, 1), s.UploadImage_1)
+	s.router.Handle("POST", "/api/upload/image", ginext.Authenticate(2, 1), s.UploadImage_0)
 
 }

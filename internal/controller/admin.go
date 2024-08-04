@@ -2,8 +2,6 @@ package controller
 
 import (
 	"context"
-	"crypto/md5"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -62,10 +60,10 @@ func (a *AdminServer) Login(ctx context.Context, req *pbapp.AdminLoginRequest) (
 	return &pbapp.AdminLoginResponse{}, nil
 }
 
-func (a *AdminServer) AddToken(ctx context.Context, request *pbapp.AdminAddTokenRequest) (*pbapp.AdminAddTokenResponse, error) {
+func (a *AdminServer) AddToken(ctx context.Context, req *pbapp.AdminAddTokenRequest) (*pbapp.AdminAddTokenResponse, error) {
 	// generate access token
-	expiresAt := time.Now().Add(time.Duration(request.GetExpire()) * time.Hour * 24)
-	accessToken, err := ginext.GenerateToken(request.GetUserid(), ginext.RoleUser, ginext.TokenTypeAccess, expiresAt)
+	expiresAt := time.Now().Add(time.Duration(req.GetExpire()) * time.Hour * 24)
+	accessToken, err := ginext.GenerateToken(req.GetUserid(), ginext.RoleUser, ginext.TokenTypeAccess, expiresAt)
 	if err != nil {
 		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
 	}
@@ -74,28 +72,4 @@ func (a *AdminServer) AddToken(ctx context.Context, request *pbapp.AdminAddToken
 		AccessToken: accessToken,
 	}, nil
 
-}
-
-func (a *AdminServer) UploadImage(ctx context.Context, request *pbapp.AdminUploadImageRequest) (*pbapp.AdminUploadImageResponse, error) {
-	var (
-		meta = metadata.SafeFromContext(ctx)
-		le   = logger.FromContext(ctx).WithFields(logger.Fields{
-			"meta":      meta,
-			"file_size": len(request.GetFile()),
-		})
-		key = request.GetKey()
-	)
-
-	if key == "" {
-		key = fmt.Sprintf("%x", md5.Sum(request.GetFile()))
-	}
-
-	le = le.WithFields(logger.Fields{
-		"key": key,
-	})
-
-	le.Debug("upload image")
-	return &pbapp.AdminUploadImageResponse{
-		Key: key,
-	}, nil
 }

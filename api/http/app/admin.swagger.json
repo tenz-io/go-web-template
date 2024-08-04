@@ -87,52 +87,6 @@
             "in": "query",
             "required": false,
             "type": "string"
-          },
-          {
-            "name": "referer",
-            "description": "@inject_tag: bind:\"header,name=X-Referer\"",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          }
-        ],
-        "tags": [
-          "AdminServer"
-        ]
-      }
-    },
-    "/admin/upload/image": {
-      "post": {
-        "operationId": "AdminServer_UploadImage",
-        "responses": {
-          "200": {
-            "description": "A successful response.",
-            "schema": {
-              "$ref": "#/definitions/appAdminUploadImageResponse"
-            }
-          },
-          "default": {
-            "description": "An unexpected error response.",
-            "schema": {
-              "$ref": "#/definitions/rpcStatus"
-            }
-          }
-        },
-        "parameters": [
-          {
-            "name": "file",
-            "description": "@inject_tag: bind:\"file,name=file\" validate:\"required,min_len=1\"",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "byte"
-          },
-          {
-            "name": "key",
-            "description": "@inject_tag: bind:\"form,name=key\"",
-            "in": "query",
-            "required": false,
-            "type": "string"
           }
         ],
         "tags": [
@@ -152,14 +106,6 @@
     },
     "appAdminLoginResponse": {
       "type": "object"
-    },
-    "appAdminUploadImageResponse": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "type": "string"
-        }
-      }
     },
     "protobufAny": {
       "type": "object",

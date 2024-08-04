@@ -18,8 +18,6 @@ type AdminServerHTTPServer interface {
 	AddToken(context.Context, *AdminAddTokenRequest) (*AdminAddTokenResponse, error)
 
 	Login(context.Context, *AdminLoginRequest) (*AdminLoginResponse, error)
-
-	UploadImage(context.Context, *AdminUploadImageRequest) (*AdminUploadImageResponse, error)
 }
 
 func RegisterAdminServerHTTPServer(r gin.IRouter, srv AdminServerHTTPServer) {
@@ -79,34 +77,10 @@ func (s *AdminServer) AddToken_0(ctx *gin.Context) {
 	ginext.Response(ctx, out)
 }
 
-func (s *AdminServer) UploadImage_0(ctx *gin.Context) {
-	var in AdminUploadImageRequest
-	if err := ginext.BindAndValidate(ctx, &in); err != nil {
-		ginext.ErrorResponse(ctx, err)
-		return
-	}
-
-	var handler ginext.RpcHandler = func(ctx context.Context, req any) (resp any, err error) {
-		return s.server.(AdminServerHTTPServer).UploadImage(ctx, req.(*AdminUploadImageRequest))
-	}
-
-	md := metadata.New(ctx, "AdminServerHTTPServer.UploadImage")
-	newCtx := metadata.WithMetadata(ctx.Request.Context(), md)
-	out, err := ginext.AllRpcInterceptor.Intercept(newCtx, &in, handler)
-	if err != nil {
-		ginext.ErrorResponse(ctx, err)
-		return
-	}
-
-	ginext.Response(ctx, out)
-}
-
 func (s *AdminServer) RegisterService() {
 
 	s.router.Handle("POST", "/admin/login", ginext.Authenticate(0, 0), s.Login_0)
 
 	s.router.Handle("POST", "/admin/add_token", ginext.Authenticate(1, 0), s.AddToken_0)
-
-	s.router.Handle("POST", "/admin/upload/image", ginext.Authenticate(1, 0), s.UploadImage_0)
 
 }

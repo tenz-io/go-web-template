@@ -26,15 +26,6 @@ service AdminServer {
       type: WEB
     };
   }
-  rpc UploadImage(AdminUploadImageRequest) returns (AdminUploadImageResponse) {
-    option (google.api.http) = {
-      post: "/admin/upload/image"
-    };
-    option (custom.common.auth) = {
-      role: ADMIN
-      type: WEB
-    };
-  }
 }
 
 message AdminLoginRequest {
@@ -42,8 +33,6 @@ message AdminLoginRequest {
   string username = 1;
   // @inject_tag: bind:"form,name=password" validate:"required,non_blank,min_len=4"
   string password = 2;
-  // @inject_tag: bind:"header,name=X-Referer"
-  string referer = 3;
 }
 
 message AdminLoginResponse {
@@ -60,15 +49,3 @@ message AdminAddTokenRequest {
 message AdminAddTokenResponse {
   string access_token = 1;
 }
-
-message AdminUploadImageRequest {
-  // @inject_tag: bind:"file,name=file" validate:"required,min_len=1"
-  bytes file = 1;
-  // @inject_tag: bind:"form,name=key"
-  string key = 2;
-}
-
-message AdminUploadImageResponse {
-  string key = 1;
-}
-

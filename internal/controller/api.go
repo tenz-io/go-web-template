@@ -4,16 +4,13 @@ import (
 	"context"
 	"crypto/md5"
 	"fmt"
-	"net/http"
-	"time"
-
-	"github.com/tenz-io/gokit/ginext"
 	"github.com/tenz-io/gokit/ginext/errcode"
 	"github.com/tenz-io/gokit/ginext/metadata"
 	"github.com/tenz-io/gokit/logger"
+	"net/http"
 
 	pbapp "go-web-template/api/http/app"
-	"go-web-template/internal/service"
+	"go-web-template/internal/repository"
 )
 
 var (
@@ -21,14 +18,14 @@ var (
 )
 
 type ApiServer struct {
-	userService service.User
+	userRepo repository.User
 }
 
 func NewApiServer(
-	userService service.User,
+	userRepo repository.User,
 ) *ApiServer {
 	return &ApiServer{
-		userService: userService,
+		userRepo: userRepo,
 	}
 }
 
@@ -42,33 +39,10 @@ func (as *ApiServer) Login(ctx context.Context, request *pbapp.LoginRequest) (*p
 	)
 
 	defer func() {
-		le.Debug("login called")
+		le.Debug("api login")
 	}()
 
-	user, err := as.userService.GetByName(ctx, request.GetUsername())
-	if err != nil {
-		return nil, errcode.NotFound(http.StatusOK, "user not found")
-	}
-
-	// mock login
-	if request.Username != request.Password {
-		return nil, errcode.Unauthorized(http.StatusOK, "password incorrect")
-	}
-
-	expiredAt := time.Now().Add(15 * time.Minute)
-	accessToken, err := ginext.GenerateToken(user.Userid, int32(user.Role), ginext.TokenTypeAccess, expiredAt)
-	if err != nil {
-		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
-	}
-	refreshToken, err := ginext.GenerateToken(user.Userid, int32(user.Role), ginext.TokenTypeRefresh, time.Now().Add(60*24*time.Hour))
-	if err != nil {
-		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
-	}
-
-	return &pbapp.LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	}, nil
+	return nil, errcode.Forbidden(http.StatusForbidden, "not implemented")
 }
 
 func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*pbapp.HelloResponse, error) {
@@ -79,7 +53,7 @@ func (as *ApiServer) Hello(ctx context.Context, request *pbapp.HelloRequest) (*p
 		le.Debug("hello called")
 	}()
 
-	user, err := as.userService.GetByName(ctx, request.GetName())
+	user, err := as.userRepo.GetByName(ctx, request.GetName())
 	if err != nil {
 		return nil, err
 	}

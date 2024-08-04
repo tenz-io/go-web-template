@@ -6,8 +6,6 @@ import (
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
-	"go-web-template/internal/constant"
-	"go-web-template/internal/model"
 	"go-web-template/internal/repository"
 )
 
@@ -15,7 +13,6 @@ import (
 //
 //go:generate mockery --name User --filename user_mock.go --inpackage
 type User interface {
-	GetByName(ctx context.Context, name string) (model.User, error)
 	VerifyAdmin(ctx context.Context, name, pass string) (ok bool, err error)
 }
 
@@ -32,20 +29,6 @@ func NewUser(
 type user struct {
 	cfg     *config.Config
 	useRepo repository.User
-}
-
-func (u *user) GetByName(ctx context.Context, name string) (model.User, error) {
-	userProfile, err := u.useRepo.UserProfile(ctx, name)
-	if err != nil {
-		return model.User{}, err
-	}
-
-	return model.User{
-		Userid:   123,
-		Role:     constant.RoleAdmin,
-		Username: name,
-		Profile:  userProfile,
-	}, nil
 }
 
 func (u *user) VerifyAdmin(ctx context.Context, name, pass string) (ok bool, err error) {
