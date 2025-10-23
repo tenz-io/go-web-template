@@ -2,31 +2,24 @@ package repository
 
 import (
 	"context"
-	"fmt"
 
-	"go-web-template/internal/config"
 	"go-web-template/internal/model"
 )
 
-// User is the interface that provides user methods.
-//
-//go:generate mockery --name User --filename user_mock.go --inpackage
+// User 用户仓库接口
 type User interface {
-	GetByName(ctx context.Context, name string) (model.User, error)
-}
+	// 基础查询
+	GetByName(ctx context.Context, name string) (*model.User, error)
+	GetByID(ctx context.Context, id int64) (*model.User, error)
 
-func NewUser() User {
-	return &user{}
-}
+	// 用户管理
+	Create(ctx context.Context, user *model.User) error
+	UpdatePassword(ctx context.Context, userID int64, newPassword string) error
 
-type user struct {
-	cfg *config.Config
-}
+	// 认证
+	VerifyUser(ctx context.Context, username, password string) (*model.User, error)
 
-func (u *user) GetByName(_ context.Context, name string) (model.User, error) {
-	return model.User{
-		Userid:   123, // TODO replace with real user id
-		Username: name,
-		Profile:  fmt.Sprintf("profile of %s", name),
-	}, nil
+	// 列表查询
+	List(ctx context.Context, limit, offset int) ([]*model.User, error)
+	Count(ctx context.Context) (int64, error)
 }

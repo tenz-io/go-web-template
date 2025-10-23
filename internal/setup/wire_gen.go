@@ -8,21 +8,22 @@ package setup
 
 import (
 	"go-web-template/internal/config"
-	"go-web-template/internal/controller"
-	"go-web-template/internal/repository"
-	"go-web-template/internal/service"
 )
 
 // Injectors from wire.go:
 
-func InitializeControllers(configConfig *config.Config) (*Controllers, error) {
-	user := repository.NewUser()
-	apiServer := controller.NewApiServer(user)
-	serviceUser := service.NewUser(configConfig, user)
-	adminServer := controller.NewAdminServer(serviceUser)
-	webServer := controller.NewWebServer(configConfig, apiServer, adminServer)
-	controllers := &Controllers{
-		webServer: webServer,
+func InitializeControllers(cfg *config.Config) (*Controllers, error) {
+	db, err := NewDatabase(cfg)
+	if err != nil {
+		return nil, err
 	}
+	user := NewUserRepository(db)
+	jwtManager := NewJWTManager(cfg)
+	apiServer := NewApiController(user, jwtManager)
+	serviceUser := NewUserService(cfg, user)
+	adminServer := NewAdminController(serviceUser, jwtManager)
+	authServer := NewAuthController(user, jwtManager)
+	webServer := NewWebController(cfg, apiServer, adminServer, authServer, jwtManager)
+	controllers := NewControllers(webServer)
 	return controllers, nil
 }

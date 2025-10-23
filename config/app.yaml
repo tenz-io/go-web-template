@@ -2,15 +2,19 @@ verbose: true
 env: "local"
 app:
   name: "go-web-template"
-  port: 8081
+  port: 8088
   web: "./web"
-  secret: "${APP_SECRET}"
-  admin_user: "${APP_ADMIN_USER}"
-  admin_pass: "${APP_ADMIN_PASS}"
+  debug: true
+  log_level: "debug"
+  log_file: "./log/app.log"
 db:
-  host: "localhost"
-  port: 3306
-  user: "root"
-  pass: "${DB_PASS}"
-  db: "mytest_db"
+  path: "./data/app.db"
+  debug: false
+  max_open_conns: 100
+  max_idle_conns: 10
+  conn_max_lifetime: "1h"
+jwt:
+  secret: "${JWT_SECRET}"
+  expire_time: "24h"
+  issuer: "go-web-template"
 

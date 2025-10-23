@@ -1,13 +1,47 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Homepage</title>
+    <title>{{.name}} - Go Web 模板</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/home.css">
 </head>
 <body>
-<h1>Welcome to {{.name}}!</h1>
+    <div class="container">
+        <div class="logo">🚀</div>
+        <h1>{{.name}}</h1>
+        <p class="subtitle">现代化的 Go Web 应用模板</p>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>🔧 API 接口</h3>
+                <p>提供完整的 RESTful API 接口，支持 JSON 格式数据交换</p>
+            </div>
+            <div class="feature">
+                <h3>🛡️ 权限管理</h3>
+                <p>内置 JWT 认证和基于角色的权限控制系统</p>
+            </div>
+            <div class="feature">
+                <h3>🎛️ 管理后台</h3>
+                <p>现代化的管理界面，支持用户管理和系统监控</p>
+            </div>
+            <div class="feature">
+                <h3>📊 监控日志</h3>
+                <p>完整的日志记录和系统监控功能</p>
+            </div>
+        </div>
+
+        <div class="actions">
+            <a href="/admin/" class="btn btn-primary">管理后台</a>
+            <a href="/api/hello?name=World" class="btn">API 测试</a>
+        </div>
+
+        <div class="status">
+            <span class="status-indicator"></span>
+            系统运行正常 - 服务已启动
+        </div>
+    </div>
 </body>
 </html>

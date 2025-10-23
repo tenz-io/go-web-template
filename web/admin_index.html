@@ -1,65 +1,82 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Admin Homepage</title>
+    <title>管理后台 - {{.name}}</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
 </head>
 <body>
-<h1> {{.name}}: Add User access token!</h1>
-<form id="addTokenForm">
-    <label for="userid">User ID:</label><br>
-    <input type="number" id="userid" name="userid" value="123" required><br>
-    <label for="expire">Expire (days):</label><br>
-    <input type="number" id="expire" name="expire" value="60" required><br><br>
-    <input type="submit" value="Submit">
-</form>
-<p id="responseMessage" style="color: green; display: none;"></p>
-<p id="errorMessage" style="color: red; display: none;">Failed to add token. Please try again.</p>
+    <div class="header">
+        <h1>🎛️ {{.name}} 管理后台</h1>
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+    </div>
 
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">1</div>
+                <div class="stat-label">在线用户</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">今日访问</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12</div>
+                <div class="stat-label">总令牌数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">系统状态</div>
+            </div>
+        </div>
 
-<script>
-    document.getElementById('addTokenForm').addEventListener('submit', function (event) {
-        event.preventDefault();
+        <div class="dashboard">
+            <div class="card">
+                <h2>🔑 生成访问令牌</h2>
+                <form id="addTokenForm">
+                    <div class="form-group">
+                        <label for="userid">用户 ID</label>
+                        <input type="number" id="userid" name="userid" value="123" required placeholder="请输入用户 ID">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="expire">有效期（天）</label>
+                        <input type="number" id="expire" name="expire" value="60" required placeholder="请输入有效期">
+                    </div>
+                    
+                    <button type="submit" class="btn">生成令牌</button>
+                </form>
+                
+                <div id="successMessage" class="message success">令牌生成成功！</div>
+                <div id="errorMessage" class="message error">令牌生成失败，请重试</div>
+                
+                <div id="tokenDisplay" class="token-display">
+                    <div id="tokenValue"></div>
+                    <button class="copy-btn" onclick="copyToken()">复制令牌</button>
+                </div>
+            </div>
 
-        const userid = document.getElementById('userid').value;
-        const expire = document.getElementById('expire').value;
+            <div class="card">
+                <h2>📊 系统信息</h2>
+                <p><strong>服务名称:</strong> {{.name}}</p>
+                <p><strong>运行环境:</strong> 开发环境</p>
+                <p><strong>版本:</strong> v1.0.0</p>
+                <p><strong>启动时间:</strong> <span id="startTime"></span></p>
+            </div>
 
-        fetch('/admin/add_token', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({userid: parseInt(userid), expire: parseInt(expire)})
-        })
-            .then(response => {
-                console.log('Response:', response);
-                if (response.status !== 200) {
-                    throw new Error('Failed to add token');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Data:', data);
-                if (data.code === 0) {
-                    document.getElementById('responseMessage').textContent = 'Access Token:  ' + data.data.access_token;
-                    document.getElementById('responseMessage').style.display = 'block';
-                    document.getElementById('errorMessage').style.display = 'none';
-                } else {
-                    document.getElementById('errorMessage').style.display = 'block';
-                    document.getElementById('responseMessage').style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('errorMessage').style.display = 'block';
-                document.getElementById('responseMessage').style.display = 'none';
-            });
-    });
-</script>
+            <div class="card">
+                <h2>🔧 快速操作</h2>
+                <button class="btn" onclick="refreshStats()" style="margin-bottom: 1rem;">刷新统计</button>
+                <button class="btn" onclick="viewLogs()" style="background: #17a2b8;">查看日志</button>
+            </div>
+        </div>
+    </div>
 
-
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/admin.js"></script>
 </body>
 </html>

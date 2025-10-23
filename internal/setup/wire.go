@@ -9,15 +9,25 @@ import (
 )
 
 func InitializeControllers(
-	_ *config.Config,
+	cfg *config.Config,
 ) (*Controllers, error) {
 	wire.Build(
-		wire.Struct(new(Controllers), "*"),
-		RepoProviderSet,
-		ServiceProviderSet,
-		ControllerProviderSet,
+		// 数据库
+		NewDatabase,
+		// JWT 管理器
+		NewJWTManager,
+		// 仓库层
+		NewUserRepository,
+		// 服务层
+		NewUserService,
+		// 控制器层
+		NewApiController,
+		NewAdminController,
+		NewAuthController,
+		NewWebController,
+		// 主控制器
+		NewControllers,
 	)
 
 	return nil, nil
-
 }

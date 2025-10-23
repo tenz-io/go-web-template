@@ -1,58 +1,44 @@
-<!-- admin_index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Admin Login</title>
+    <title>管理员登录 - {{.name}}</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/login.css">
 </head>
 <body>
-<h1>Login to Admin</h1>
-<form id="loginForm">
-    <label for="username">Username:</label><br>
-    <input type="text" id="username" name="username" required><br>
-    <label for="password">Password:</label><br>
-    <input type="password" id="password" name="password" required><br><br>
-    <input type="submit" value="Submit">
-</form>
-<p id="errorMessage" style="color: red; display: none;">Login failed. Please try again.</p>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🔐 管理员登录</h1>
+            <p>{{.name}} 后台管理系统</p>
+        </div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username" required placeholder="请输入用户名">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" name="password" required placeholder="请输入密码">
+            </div>
+            
+            <button type="submit" class="btn">登录</button>
+        </form>
+        
+        <div id="errorMessage" class="message error">登录失败，请检查用户名和密码</div>
+        <div id="successMessage" class="message success">登录成功，正在跳转...</div>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>正在登录...</p>
+        </div>
+    </div>
 
-<script>
-    document.getElementById('loginForm').addEventListener('submit', function (event) {
-        event.preventDefault();
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        fetch('/admin/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({username: username, password: password})
-        })
-            .then(response => {
-                console.log('Response:', response);
-                if (response.status !== 200) {
-                    throw new Error('Failed to login');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Data:', data);
-                if (data.code === 0) {
-                    window.location.href = '/admin/';
-                } else {
-                    // {"code":200,"message":"auth failed","data":{}} is returned
-                    document.getElementById('errorMessage').style.display = 'block';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('errorMessage').style.display = 'block';
-            });
-    });
-</script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/login.js"></script>
 </body>
 </html>
