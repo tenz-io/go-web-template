@@ -2,7 +2,6 @@ package controller
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
@@ -109,7 +108,7 @@ func (a *AdminServer) Login(c *gin.Context) {
 	}
 
 	// 设置 JWT token 为 cookie
-	c.SetCookie("jwt_token", token, 900, "/", "", false, true)
+	c.SetCookie(middleware.JWTTokenCookieName, token, 900, "/", "", false, true)
 
 	le.Info("admin login successful")
 	c.JSON(http.StatusOK, response.AdminLoginResponse{
@@ -179,7 +178,7 @@ func (a *AdminServer) ChangePassword(c *gin.Context) {
 	le.Debug("admin change password called")
 
 	// 从 JWT token 中获取用户ID
-	userIDStr, exists := c.Get("user_id")
+	userIDInterface, exists := c.Get("user_id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
@@ -190,13 +189,18 @@ func (a *AdminServer) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	userID, err := strconv.ParseInt(userIDStr.(string), 10, 64)
-	if err != nil {
-		le.Error("invalid user ID")
+	// 处理不同类型的 user_id
+	var userID int64
+	var err error
+	switch v := userIDInterface.(type) {
+	case int64:
+		userID = v
+	default:
+		le.Error("invalid user ID type")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
 				Code:    500,
-				Message: "用户ID无效",
+				Message: "用户ID类型无效",
 			},
 		})
 		return

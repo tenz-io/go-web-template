@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"go-web-template/internal/constant"
 	"net/http"
 	"strings"
 
@@ -82,7 +83,11 @@ func (ws *WebServer) registerRoutes() {
 	})
 
 	// 管理后台页面（需要管理员权限）
-	ws.engine.GET("/admin/", middleware.AdminAuth(ws.jwtManager), func(c *gin.Context) {
+	ws.engine.GET("/admin/", middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeCookie,
+		Required: true,
+		Role:     constant.RoleAdmin,
+	}, ws.jwtManager), func(c *gin.Context) {
 		c.HTML(http.StatusOK, "admin_index.html", gin.H{
 			"name": ws.cfg.App.Name,
 		})
@@ -97,6 +102,7 @@ func (ws *WebServer) registerRoutes() {
 	apiGroup.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeBearer,
 		Required: false,
+		Role:     constant.RoleUser,
 	}, ws.jwtManager))
 	ws.api.RegisterRoutes(apiGroup)
 
@@ -105,6 +111,7 @@ func (ws *WebServer) registerRoutes() {
 	adminGroup.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeCookie,
 		Required: true,
+		Role:     constant.RoleAdmin,
 	}, ws.jwtManager))
 	ws.admin.RegisterRoutes(adminGroup)
 }

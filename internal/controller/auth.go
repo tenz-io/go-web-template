@@ -91,7 +91,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 
 	// 设置 Cookie（用于管理后台）
 	if user.Role == int32(constant.RoleAdmin) {
-		c.SetCookie("jwt_token", token, 3600*24, "/", "", false, true)
+		c.SetCookie(middleware.JWTTokenCookieName, token, 3600*24, "/", "", false, true)
 	}
 
 	le.Info("user login successful")
@@ -109,7 +109,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 // Logout 登出接口
 func (a *AuthServer) Logout(c *gin.Context) {
 	// 清除 Cookie
-	c.SetCookie("jwt_token", "", -1, "/", "", false, true)
+	c.SetCookie(middleware.JWTTokenCookieName, "", -1, "/", "", false, true)
 
 	c.JSON(http.StatusOK, response.BaseResponse{
 		Code:    0,

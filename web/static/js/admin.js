@@ -140,7 +140,7 @@ async function loadUsers() {
         const result = await response.json();
         
         if (result.code === 0) {
-            displayUsers(result.data || []);
+            displayUsers(result.data.users || []);
         } else {
             console.error('Failed to load users:', result.message);
         }

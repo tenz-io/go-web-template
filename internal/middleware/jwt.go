@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"go-web-template/internal/constant"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +15,11 @@ import (
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
+)
+
+const (
+	// JWTTokenCookieName JWT token cookie 名称
+	JWTTokenCookieName = "jwt_token"
 )
 
 // JWT Claims 结构体
@@ -129,8 +135,9 @@ const (
 
 // 鉴权配置
 type AuthConfig struct {
-	Type     AuthType `json:"type"`
-	Required bool     `json:"required"`
+	Type     AuthType      `json:"type"`
+	Required bool          `json:"required"`
+	Role     constant.Role `json:"role"`
 }
 
 // 鉴权中间件
@@ -147,7 +154,7 @@ func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 		case AuthTypeBearer:
 			handleBearerAuth(c, jwtManager)
 		case AuthTypeCookie:
-			handleCookieAuth(c, jwtManager)
+			handleCookieAuth(c, jwtManager, config.Role)
 		default:
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
@@ -197,14 +204,12 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	c.Next()
 }
 
-// Cookie 认证
-func handleCookieAuth(c *gin.Context, jwtManager *JWTManager) {
-	token, err := c.Cookie("jwt_token")
+// Cookie 认证（通用）
+func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role) {
+	token, err := c.Cookie(JWTTokenCookieName)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    401,
-			"message": "需要登录",
-		})
+		logger.FromContext(c.Request.Context()).Warn("JWT cookie auth failed")
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
 		c.Abort()
 		return
 	}
@@ -212,48 +217,27 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager) {
 	claims, err := jwtManager.ValidateToken(token)
 	if err != nil {
 		logger.FromContext(c.Request.Context()).Warn("JWT validation failed")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    401,
-			"message": "无效的 session",
-		})
+		c.Redirect(http.StatusTemporaryRedirect, "/login")
 		c.Abort()
 		return
+	}
+
+	// 检查角色权限
+	if role == constant.RoleAdmin {
+		// 管理员权限：必须是管理员角色
+		if claims.Role != int32(constant.RoleAdmin) {
+			logger.FromContext(c.Request.Context()).Warn("Admin authentication failed: insufficient role")
+			c.Redirect(http.StatusTemporaryRedirect, "/login")
+			c.Abort()
+			return
+		}
+	} else if role == constant.RoleUser {
+		// 普通用户权限：可以是任何有效用户
+		// 这里不需要额外检查，因为已经验证了 JWT token
 	}
 
 	// 设置用户信息到上下文
 	c.Set("user_id", claims.UserID)
 	c.Set("role", claims.Role)
 	c.Next()
-}
-
-// 管理员权限中间件
-func AdminAuth(jwtManager *JWTManager) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token, err := c.Cookie("jwt_token")
-		if err != nil {
-			c.Redirect(http.StatusTemporaryRedirect, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		claims, err := jwtManager.ValidateToken(token)
-		if err != nil {
-			logger.FromContext(c.Request.Context()).Warn("Admin JWT validation failed")
-			c.Redirect(http.StatusTemporaryRedirect, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		// 检查是否为管理员角色 (1 表示管理员)
-		if claims.Role != 1 {
-			c.Redirect(http.StatusTemporaryRedirect, "/admin/login")
-			c.Abort()
-			return
-		}
-
-		// 设置用户信息到上下文
-		c.Set("user_id", claims.UserID)
-		c.Set("role", claims.Role)
-		c.Next()
-	}
 }
