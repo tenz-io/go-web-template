@@ -71,7 +71,7 @@ func (as *ApiServer) Login(c *gin.Context) {
 	}
 
 	// 生成 JWT token
-	token, err := as.jwtManager.GenerateToken(fmt.Sprintf("%d", user.ID), user.Username, user.Role)
+	token, err := as.jwtManager.GenerateToken(user.ID, user.Role)
 	if err != nil {
 		le.Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

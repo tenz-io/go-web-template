@@ -18,13 +18,10 @@ import (
 
 // JWT Claims 结构体
 type Claims struct {
-	UserID   string `json:"user_id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	Exp      int64  `json:"exp"`
-	Iat      int64  `json:"iat"`
-	Iss      string `json:"iss"`
-	Sub      string `json:"sub"`
+	UserID int64 `json:"user_id"`
+	Role   int32 `json:"role"`
+	Exp    int64 `json:"exp"`
+	Iat    int64 `json:"iat"`
 }
 
 // JWT 管理器
@@ -44,20 +41,17 @@ func NewJWTManager(cfg *config.JWTConfig) *JWTManager {
 }
 
 // 生成 JWT Token
-func (j *JWTManager) GenerateToken(userID, username, role string) (string, error) {
+func (j *JWTManager) GenerateToken(userID int64, role int32) (string, error) {
 	now := time.Now()
 	claims := &Claims{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
-		Exp:      now.Add(j.expireTime).Unix(),
-		Iat:      now.Unix(),
-		Iss:      j.issuer,
-		Sub:      userID,
+		UserID: userID,
+		Role:   role,
+		Exp:    now.Add(j.expireTime).Unix(),
+		Iat:    now.Unix(),
 	}
 
 	// 创建 JWT header
-	header := map[string]interface{}{
+	header := map[string]any{
 		"alg": "HS256",
 		"typ": "JWT",
 	}
@@ -199,7 +193,6 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 
 	// 设置用户信息到上下文
 	c.Set("user_id", claims.UserID)
-	c.Set("username", claims.Username)
 	c.Set("role", claims.Role)
 	c.Next()
 }
@@ -229,7 +222,6 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager) {
 
 	// 设置用户信息到上下文
 	c.Set("user_id", claims.UserID)
-	c.Set("username", claims.Username)
 	c.Set("role", claims.Role)
 	c.Next()
 }
@@ -252,8 +244,8 @@ func AdminAuth(jwtManager *JWTManager) gin.HandlerFunc {
 			return
 		}
 
-		// 检查是否为管理员角色
-		if claims.Role != "admin" {
+		// 检查是否为管理员角色 (1 表示管理员)
+		if claims.Role != 1 {
 			c.Redirect(http.StatusTemporaryRedirect, "/admin/login")
 			c.Abort()
 			return
@@ -261,7 +253,6 @@ func AdminAuth(jwtManager *JWTManager) gin.HandlerFunc {
 
 		// 设置用户信息到上下文
 		c.Set("user_id", claims.UserID)
-		c.Set("username", claims.Username)
 		c.Set("role", claims.Role)
 		c.Next()
 	}

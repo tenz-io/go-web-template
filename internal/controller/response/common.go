@@ -11,7 +11,7 @@ type BaseResponse struct {
 // SuccessResponse 成功响应
 type SuccessResponse struct {
 	BaseResponse
-	Data interface{} `json:"data,omitempty"`
+	Data any `json:"data,omitempty"`
 }
 
 // ErrorResponse 错误响应
@@ -22,14 +22,14 @@ type ErrorResponse struct {
 // PageResponse 分页响应
 type PageResponse struct {
 	BaseResponse
-	Data  interface{} `json:"data"`
-	Total int64       `json:"total"`
-	Page  int         `json:"page"`
-	Size  int         `json:"size"`
+	Data  any   `json:"data"`
+	Total int64 `json:"total"`
+	Page  int   `json:"page"`
+	Size  int   `json:"size"`
 }
 
 // 创建成功响应
-func NewSuccessResponse(data interface{}) SuccessResponse {
+func NewSuccessResponse(data any) SuccessResponse {
 	return SuccessResponse{
 		BaseResponse: BaseResponse{
 			Code:    0,
@@ -50,7 +50,7 @@ func NewErrorResponse(code int, message string) ErrorResponse {
 }
 
 // 创建分页响应
-func NewPageResponse(data interface{}, total int64, page, size int) PageResponse {
+func NewPageResponse(data any, total int64, page, size int) PageResponse {
 	return PageResponse{
 		BaseResponse: BaseResponse{
 			Code:    0,

@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -70,7 +69,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 	}
 
 	// 生成 JWT token
-	token, err := a.jwtManager.GenerateToken(fmt.Sprintf("%d", user.ID), user.Username, user.Role)
+	token, err := a.jwtManager.GenerateToken(user.ID, user.Role)
 	if err != nil {
 		le.Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -84,14 +83,14 @@ func (a *AuthServer) Login(c *gin.Context) {
 
 	// 根据用户角色设置重定向地址
 	var redirect string
-	if user.Role == string(constant.RoleAdmin) {
+	if user.Role == int32(constant.RoleAdmin) {
 		redirect = "/admin/"
 	} else {
 		redirect = "/"
 	}
 
 	// 设置 Cookie（用于管理后台）
-	if user.Role == string(constant.RoleAdmin) {
+	if user.Role == int32(constant.RoleAdmin) {
 		c.SetCookie("jwt_token", token, 3600*24, "/", "", false, true)
 	}
 
@@ -102,7 +101,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 			Message: "登录成功",
 		},
 		Token:    token,
-		Role:     user.Role,
+		Role:     constant.Role(user.Role).String(),
 		Redirect: redirect,
 	})
 }

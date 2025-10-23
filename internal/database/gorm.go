@@ -121,7 +121,7 @@ func (db *DB) initDefaultAdmin() error {
 		Username: initAdminName,
 		Password: initAdminPassHash,
 		Salt:     initAdminSalt,
-		Role:     string(constant.RoleAdmin),
+		Role:     int32(constant.RoleAdmin),
 		Email:    "admin@example.com",
 		Profile:  "系统管理员",
 	}

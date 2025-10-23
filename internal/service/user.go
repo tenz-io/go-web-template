@@ -12,6 +12,7 @@ import (
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
+	"go-web-template/internal/constant"
 	"go-web-template/internal/model"
 	"go-web-template/internal/repository"
 )
@@ -68,7 +69,7 @@ func (u *user) VerifyAdmin(ctx context.Context, username, password string) (bool
 		return false, err
 	}
 
-	if user.Role != "admin" {
+	if user.Role != int32(constant.RoleAdmin) {
 		le.Debug("user is not admin")
 		return false, nil
 	}
