@@ -27,3 +27,8 @@ type AdminAddUserRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Role     string `json:"role" binding:"required,oneof=user admin"`
 }
+
+// AdminDeleteUserRequest 管理员删除用户请求
+type AdminDeleteUserRequest struct {
+	UserID int64 `json:"user_id" binding:"required"`
+}

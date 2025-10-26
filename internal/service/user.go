@@ -26,6 +26,7 @@ type User interface {
 	// 用户管理
 	CreateUser(ctx context.Context, req *model.CreateUserRequest) (*model.User, error)
 	UpdatePassword(ctx context.Context, userID int64, req *model.UpdatePasswordRequest) error
+	DeleteUser(ctx context.Context, userID int64) error
 	GetUser(ctx context.Context, userID int64) (*model.User, error)
 	ListUsers(ctx context.Context, limit, offset int) ([]*model.User, int64, error)
 }
@@ -179,6 +180,21 @@ func (u *user) ListUsers(ctx context.Context, limit, offset int) ([]*model.User,
 	}
 
 	return users, total, nil
+}
+
+// DeleteUser 删除用户
+func (u *user) DeleteUser(ctx context.Context, userID int64) error {
+	le := logger.FromContext(ctx).WithField("userID", userID)
+
+	// 调用 repository 删除用户
+	err := u.userRepo.Delete(ctx, userID)
+	if err != nil {
+		le.Error("failed to delete user")
+		return err
+	}
+
+	le.Info("user deleted successfully")
+	return nil
 }
 
 // generateSalt 生成随机盐值

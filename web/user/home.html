@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>用户中心 - {{.name}}</title>
+    
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/user.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 px-0">
+                <div class="sidebar">
+                    <div class="p-3">
+                        <h4 class="text-white">
+                            <i class="fas fa-user"></i> {{.name}}
+                        </h4>
+                        <small class="text-muted">用户中心</small>
+                    </div>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" data-tab="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> 仪表盘
+                        </a>
+                        <a class="nav-link" href="#" data-tab="tokens">
+                            <i class="fas fa-key"></i> Token管理
+                        </a>
+                        <a class="nav-link" href="#" data-tab="profile">
+                            <i class="fas fa-user-cog"></i> 个人设置
+                        </a>
+                        <a class="nav-link" href="#" onclick="UserPage.logout()">
+                            <i class="fas fa-sign-out-alt"></i> 退出登录
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="col-md-10">
+                <div class="main-content p-4">
+                    <!-- 仪表盘 -->
+                    <div id="dashboard" class="tab-content">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-tachometer-alt"></i> 仪表盘</h2>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-user icon primary"></i>
+                                        <h5 class="card-title">用户信息</h5>
+                                        <p class="card-text">欢迎使用 {{.name}} 系统</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-key icon success"></i>
+                                        <h5 class="card-title">API Token</h5>
+                                        <p class="card-text" id="tokenCount">0 个活跃Token</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-shield-alt icon warning"></i>
+                                        <h5 class="card-title">安全设置</h5>
+                                        <p class="card-text">管理您的账户安全</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="usage-card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0"><i class="fas fa-info-circle"></i> 使用说明</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-key text-primary"></i> API Token 使用</h6>
+                                                <p>生成API Token后，您可以在API请求中使用Bearer认证：</p>
+                                                <code>Authorization: Bearer YOUR_TOKEN</code>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6><i class="fas fa-shield-alt text-warning"></i> 安全建议</h6>
+                                                <ul>
+                                                    <li>定期修改密码</li>
+                                                    <li>妥善保管API Token</li>
+                                                    <li>不要在公共场所使用</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token管理 -->
+                    <div id="tokens" class="tab-content" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-key"></i> Token 管理</h2>
+                            <button class="btn btn-primary" onclick="UserPage.showGenerateTokenModal()">
+                                <i class="fas fa-plus"></i> 生成新Token
+                            </button>
+                        </div>
+                        
+                        <!-- Token列表 -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Token名称</th>
+                                                <th>创建时间</th>
+                                                <th>过期时间</th>
+                                                <th>状态</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tokensTableBody">
+                                            <tr>
+                                                <td colspan="5" class="text-center">
+                                                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 个人设置 -->
+                    <div id="profile" class="tab-content" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-user-cog"></i> 个人设置</h2>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">修改密码</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="changePasswordForm">
+                                            <div class="mb-3">
+                                                <label for="oldPassword" class="form-label">当前密码</label>
+                                                <input type="password" class="form-control" id="oldPassword" name="old_password" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="newPassword" class="form-label">新密码</label>
+                                                <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="6">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="confirmPassword" class="form-label">确认新密码</label>
+                                                <input type="password" class="form-control" id="confirmPassword" required>
+                                            </div>
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-key"></i> 修改密码
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">账户信息</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">用户名</dt>
+                                            <dd class="col-sm-8" id="userInfo">-</dd>
+                                            <dt class="col-sm-4">角色</dt>
+                                            <dd class="col-sm-8" id="userRole">-</dd>
+                                            <dt class="col-sm-4">注册时间</dt>
+                                            <dd class="col-sm-8" id="userCreated">-</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成Token模态框 -->
+    <div class="modal fade" id="generateTokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">生成新Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateTokenForm">
+                        <div class="mb-3">
+                            <label for="tokenName" class="form-label">Token名称</label>
+                            <input type="text" class="form-control" id="tokenName" placeholder="例如：API访问Token" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tokenExpire" class="form-label">有效期</label>
+                            <select class="form-select" id="tokenExpire" name="expire" required>
+                                <option value="1">1小时</option>
+                                <option value="6">6小时</option>
+                                <option value="12">12小时</option>
+                                <option value="24" selected>24小时</option>
+                                <option value="168">7天</option>
+                                <option value="720">30天</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="UserPage.generateToken()">生成Token</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token显示模态框 -->
+    <div class="modal fade" id="tokenDisplayModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">生成的Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>重要提示：</strong>请立即复制并保存此Token，关闭此窗口后将无法再次查看！
+                    </div>
+                    <div class="mb-3">
+                        <label for="generatedToken" class="form-label">Token</label>
+                        <textarea class="form-control" id="generatedToken" rows="3" readonly></textarea>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" onclick="UserPage.copyToken()">
+                            <i class="fas fa-copy"></i> 复制Token
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="UserPage.downloadToken()">
+                            <i class="fas fa-download"></i> 下载
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">我已保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/user.js"></script>
+</body>
+</html>

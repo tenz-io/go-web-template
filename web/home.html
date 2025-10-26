@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>{{.name}} - 控制台</title>
+    
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .top-toolbar {
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0.75rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar .nav-link i {
+            width: 20px;
+            margin-right: 10px;
+        }
+        .main-content {
+            padding: 2rem;
+            min-height: calc(100vh - 60px);
+        }
+        .user-dropdown {
+            position: relative;
+        }
+        .user-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+        .user-dropdown-menu.show {
+            display: block;
+        }
+        .user-dropdown-menu a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        .user-dropdown-menu a:hover {
+            background-color: #f8f9fa;
+        }
+        .user-dropdown-menu a:last-child {
+            border-bottom: none;
+        }
+        .content-area {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .stats-card .icon {
+            font-size: 2.5rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部工具栏 -->
+    <div class="top-toolbar">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h4 class="mb-0">
+                        <i class="fas fa-tachometer-alt text-primary"></i> {{.name}} 控制台
+                    </h4>
+                </div>
+                <div class="col-md-6 text-end">
+                    <div class="user-dropdown">
+                        <button class="btn btn-outline-primary" onclick="HomePage.toggleUserMenu()">
+                            <i class="fas fa-user"></i> <span id="userDisplayName">用户</span>
+                            <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                        <div class="user-dropdown-menu" id="userDropdownMenu">
+                            <a href="#" onclick="HomePage.showUserInfo()">
+                                <i class="fas fa-user"></i> 个人信息
+                            </a>
+                            <a href="#" onclick="HomePage.showChangePassword()">
+                                <i class="fas fa-key"></i> 修改密码
+                            </a>
+                            <a href="#" onclick="HomePage.logout()" class="text-danger">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 左侧菜单 -->
+            <div class="col-md-2 px-0">
+                <div class="sidebar">
+                    <div class="p-3">
+                        <h5 class="mb-0">
+                            <i class="fas fa-bars"></i> 菜单
+                        </h5>
+                    </div>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" data-tab="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> 仪表盘
+                        </a>
+                        <!-- 管理员菜单 -->
+                        <div id="adminMenu" style="display: none;">
+                            <a class="nav-link" href="#" data-tab="users">
+                                <i class="fas fa-users"></i> 用户管理
+                            </a>
+                        </div>
+                        <!-- 普通用户菜单 -->
+                        <div id="userMenu" style="display: none;">
+                            <a class="nav-link" href="#" data-tab="tokens">
+                                <i class="fas fa-key"></i> Token管理
+                            </a>
+                        </div>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="col-md-10">
+                <div class="main-content">
+                    <!-- 仪表盘 -->
+                    <div id="dashboard" class="tab-content">
+                        <div class="content-area">
+                            <h2 class="mb-4">
+                                <i class="fas fa-tachometer-alt"></i> 仪表盘
+                            </h2>
+                            
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">总用户数</h6>
+                                                <h3 class="mb-0" id="totalUsers">-</h3>
+                                            </div>
+                                            <i class="fas fa-users icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">活跃用户</h6>
+                                                <h3 class="mb-0" id="activeUsers">-</h3>
+                                            </div>
+                                            <i class="fas fa-user-check icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">Token数量</h6>
+                                                <h3 class="mb-0" id="tokenCount">-</h3>
+                                            </div>
+                                            <i class="fas fa-key icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stats-card">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">今日登录</h6>
+                                                <h3 class="mb-0" id="todayLogins">-</h3>
+                                            </div>
+                                            <i class="fas fa-sign-in-alt icon"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">欢迎使用 {{.name}}</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <p>欢迎来到 {{.name}} 控制台！您可以使用左侧菜单来管理您的账户和系统。</p>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-info-circle text-primary"></i> 系统信息</h6>
+                                                    <ul class="list-unstyled">
+                                                        <li><strong>版本：</strong> v1.0.0</li>
+                                                        <li><strong>框架：</strong> Go + Gin</li>
+                                                        <li><strong>数据库：</strong> SQLite</li>
+                                                    </ul>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-shield-alt text-warning"></i> 安全提示</h6>
+                                                    <ul class="list-unstyled">
+                                                        <li>定期修改密码</li>
+                                                        <li>妥善保管API Token</li>
+                                                        <li>不要在公共场所使用</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户管理（仅管理员可见） -->
+                    <div id="users" class="tab-content" style="display: none;">
+                        <div class="content-area">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2><i class="fas fa-users"></i> 用户管理</h2>
+                                <button class="btn btn-primary" onclick="HomePage.showAddUserModal()">
+                                    <i class="fas fa-plus"></i> 添加用户
+                                </button>
+                            </div>
+                            
+                            <!-- 搜索和筛选 -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="searchInput" placeholder="搜索用户名...">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="HomePage.searchUsers()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="roleFilter">
+                                        <option value="">所有角色</option>
+                                        <option value="admin">管理员</option>
+                                        <option value="user">普通用户</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-primary" onclick="HomePage.refreshUsers()">
+                                        <i class="fas fa-sync"></i> 刷新
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 用户列表 -->
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>用户名</th>
+                                            <th>角色</th>
+                                            <th>创建时间</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token管理（仅普通用户可见） -->
+                    <div id="tokens" class="tab-content" style="display: none;">
+                        <div class="content-area">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2><i class="fas fa-key"></i> Token 管理</h2>
+                                <button class="btn btn-primary" onclick="HomePage.showGenerateTokenModal()">
+                                    <i class="fas fa-plus"></i> 生成新Token
+                                </button>
+                            </div>
+                            
+                            <!-- Token列表 -->
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Token名称</th>
+                                            <th>创建时间</th>
+                                            <th>过期时间</th>
+                                            <th>状态</th>
+                                            <th>操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tokensTableBody">
+                                        <tr>
+                                            <td colspan="5" class="text-center">
+                                                <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="newUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="newUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newRole" class="form-label">角色</label>
+                            <select class="form-select" id="newRole" required>
+                                <option value="user">普通用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="HomePage.addUser()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 生成Token模态框 -->
+    <div class="modal fade" id="generateTokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">生成新Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="generateTokenForm">
+                        <div class="mb-3">
+                            <label for="tokenName" class="form-label">Token名称</label>
+                            <input type="text" class="form-control" id="tokenName" placeholder="例如：API访问Token" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tokenExpire" class="form-label">有效期</label>
+                            <select class="form-select" id="tokenExpire" name="expire" required>
+                                <option value="1">1小时</option>
+                                <option value="6">6小时</option>
+                                <option value="12">12小时</option>
+                                <option value="24" selected>24小时</option>
+                                <option value="168">7天</option>
+                                <option value="720">30天</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="HomePage.generateToken()">生成Token</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label">当前密码</label>
+                            <input type="password" class="form-control" id="oldPassword" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-warning" onclick="HomePage.changePassword()">修改密码</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/home.js"></script>
+</body>
+</html>

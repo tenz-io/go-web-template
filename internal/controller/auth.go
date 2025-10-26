@@ -29,11 +29,8 @@ func NewAuthServer(userRepo repository.User, jwtManager *middleware.JWTManager) 
 
 // RegisterRoutes 注册认证路由
 func (a *AuthServer) RegisterRoutes(rg *gin.RouterGroup) {
-	auth := rg.Group("/auth")
-	{
-		auth.POST("/login", a.Login)
-		auth.POST("/logout", a.Logout)
-	}
+	rg.POST("/login", a.Login)
+	rg.POST("/logout", a.Logout)
 }
 
 // Login 统一登录接口
@@ -81,13 +78,8 @@ func (a *AuthServer) Login(c *gin.Context) {
 		return
 	}
 
-	// 根据用户角色设置重定向地址
-	var redirect string
-	if user.Role == int32(constant.RoleAdmin) {
-		redirect = "/admin/"
-	} else {
-		redirect = "/"
-	}
+	// 统一重定向到home页面
+	redirect := "/home"
 
 	// 设置 Cookie（用于管理后台）
 	if user.Role == int32(constant.RoleAdmin) {

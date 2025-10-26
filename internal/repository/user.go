@@ -15,6 +15,7 @@ type User interface {
 	// 用户管理
 	Create(ctx context.Context, user *model.User) error
 	UpdatePassword(ctx context.Context, userID int64, newPassword string) error
+	Delete(ctx context.Context, userID int64) error
 
 	// 认证
 	VerifyUser(ctx context.Context, username, password string) (*model.User, error)

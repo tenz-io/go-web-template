@@ -24,6 +24,7 @@ func InitializeControllers(
 		NewApiController,
 		NewAdminController,
 		NewAuthController,
+		NewUserController,
 		NewWebController,
 		// 主控制器
 		NewControllers,

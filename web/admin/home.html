@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>管理后台 - {{.name}}</title>
+    
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-2 px-0">
+                <div class="sidebar">
+                    <div class="p-3">
+                        <h4 class="text-white">
+                            <i class="fas fa-cogs"></i> {{.name}}
+                        </h4>
+                        <small class="text-muted">管理后台</small>
+                    </div>
+                    <nav class="nav flex-column">
+                        <a class="nav-link active" href="#" data-tab="dashboard">
+                            <i class="fas fa-tachometer-alt"></i> 仪表盘
+                        </a>
+                        <a class="nav-link" href="#" data-tab="users">
+                            <i class="fas fa-users"></i> 用户管理
+                        </a>
+                        <a class="nav-link" href="#" data-tab="settings">
+                            <i class="fas fa-cog"></i> 系统设置
+                        </a>
+                        <a class="nav-link" href="#" onclick="AdminPage.logout()">
+                            <i class="fas fa-sign-out-alt"></i> 退出登录
+                        </a>
+                    </nav>
+                </div>
+            </div>
+            
+            <!-- 主内容区 -->
+            <div class="col-md-10">
+                <div class="main-content p-4">
+                    <!-- 仪表盘 -->
+                    <div id="dashboard" class="tab-content">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-tachometer-alt"></i> 仪表盘</h2>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-users icon primary"></i>
+                                        <h5 class="card-title">用户总数</h5>
+                                        <p class="card-text" id="totalUsers">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-user-check icon success"></i>
+                                        <h5 class="card-title">活跃用户</h5>
+                                        <p class="card-text" id="activeUsers">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-user-shield icon warning"></i>
+                                        <h5 class="card-title">管理员</h5>
+                                        <p class="card-text" id="adminUsers">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card feature-card">
+                                    <div class="card-body">
+                                        <i class="fas fa-clock icon info"></i>
+                                        <h5 class="card-title">今日登录</h5>
+                                        <p class="card-text" id="todayLogins">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户管理 -->
+                    <div id="users" class="tab-content" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-users"></i> 用户管理</h2>
+                            <button class="btn btn-primary" onclick="AdminPage.showAddUserModal()">
+                                <i class="fas fa-plus"></i> 添加用户
+                            </button>
+                        </div>
+                        
+                        <!-- 搜索和筛选 -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchInput" placeholder="搜索用户名...">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="AdminPage.searchUsers()">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="roleFilter">
+                                    <option value="">所有角色</option>
+                                    <option value="admin">管理员</option>
+                                    <option value="user">普通用户</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-primary" onclick="AdminPage.refreshUsers()">
+                                    <i class="fas fa-sync"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 用户列表 -->
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>用户名</th>
+                                                <th>角色</th>
+                                                <th>创建时间</th>
+                                                <th>状态</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center">
+                                                    <i class="fas fa-spinner fa-spin"></i> 加载中...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统设置 -->
+                    <div id="settings" class="tab-content" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2><i class="fas fa-cog"></i> 系统设置</h2>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">基本设置</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="settingsForm">
+                                            <div class="mb-3">
+                                                <label for="siteName" class="form-label">站点名称</label>
+                                                <input type="text" class="form-control" id="siteName" value="{{.name}}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="jwtSecret" class="form-label">JWT密钥</label>
+                                                <input type="password" class="form-control" id="jwtSecret" placeholder="输入新密钥">
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-save"></i> 保存设置
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">系统信息</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <dl class="row">
+                                            <dt class="col-sm-4">版本</dt>
+                                            <dd class="col-sm-8">v1.0.0</dd>
+                                            <dt class="col-sm-4">Go版本</dt>
+                                            <dd class="col-sm-8">1.22+</dd>
+                                            <dt class="col-sm-4">框架</dt>
+                                            <dd class="col-sm-8">Gin</dd>
+                                            <dt class="col-sm-4">数据库</dt>
+                                            <dd class="col-sm-8">SQLite</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加用户模态框 -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="newUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="newUsername" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="newPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newRole" class="form-label">角色</label>
+                            <select class="form-select" id="newRole" required>
+                                <option value="user">普通用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="AdminPage.addUser()">添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

@@ -104,6 +104,12 @@ func (r *UserGORM) Count(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+// Delete 删除用户
+func (r *UserGORM) Delete(ctx context.Context, userID int64) error {
+	err := r.db.WithContext(ctx).Delete(&model.User{}, userID).Error
+	return err
+}
+
 // hashPasswordWithSalt 使用 HMAC-SHA256 + 盐值哈希密码，并进行 base64 编码
 func hashPasswordWithSalt(password, salt string) (string, error) {
 	// 使用 HMAC-SHA256 生成哈希

@@ -29,13 +29,10 @@ func NewApiServer(userRepo repository.User, jwtManager *middleware.JWTManager) *
 
 // 注册 API 路由
 func (as *ApiServer) RegisterRoutes(r *gin.RouterGroup) {
-	api := r.Group("/api")
-	{
-		api.POST("/login", as.Login)
-		api.GET("/hello", as.Hello)
-		api.GET("/image/:key", as.GetImage)
-		api.POST("/upload", as.UploadImage)
-	}
+	r.POST("/login", as.Login)
+	r.GET("/hello", as.Hello)
+	r.GET("/image/:key", as.GetImage)
+	r.POST("/upload", as.UploadImage)
 }
 
 // 用户登录

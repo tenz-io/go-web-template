@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"go-web-template/internal/constant"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
@@ -19,10 +18,11 @@ type WebServer struct {
 	api        *ApiServer
 	admin      *AdminServer
 	auth       *AuthServer
+	user       *UserServer
 	jwtManager *middleware.JWTManager
 }
 
-func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminServer, authServer *AuthServer, jwtManager *middleware.JWTManager) *WebServer {
+func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminServer, authServer *AuthServer, userServer *UserServer, jwtManager *middleware.JWTManager) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -35,6 +35,7 @@ func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminSe
 		api:        apiServer,
 		admin:      adminServer,
 		auth:       authServer,
+		user:       userServer,
 		jwtManager: jwtManager,
 	}
 
@@ -47,19 +48,9 @@ func (ws *WebServer) Init() error {
 	ws.engine.Use(gin.Recovery())
 	ws.engine.Use(middleware.CORS())
 
-	// 设置静态文件和模板
-	tmplPattern := strings.Join([]string{
-		ws.cfg.App.Web,
-		"*.html",
-	}, "/")
-
-	static := strings.Join([]string{
-		ws.cfg.App.Web,
-		"static",
-	}, "/")
-
-	ws.engine.LoadHTMLGlob(tmplPattern)
-	ws.engine.Static("/static", static)
+	// 加载所有HTML模板文件
+	ws.engine.LoadHTMLGlob(ws.cfg.App.Web + "/*.html") // 根目录HTML
+	ws.engine.Static("/static", ws.cfg.App.Web+"/static")
 
 	// 注册路由
 	ws.registerRoutes()
@@ -68,37 +59,12 @@ func (ws *WebServer) Init() error {
 }
 
 func (ws *WebServer) registerRoutes() {
-	// 首页
-	ws.engine.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
-	})
-
-	// 统一登录页面
-	ws.engine.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
-	})
-
-	// 管理后台页面（需要管理员权限）
-	ws.engine.GET("/admin/", middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeCookie,
-		Required: true,
-		Role:     constant.RoleAdmin,
-	}, ws.jwtManager), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_index.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
-	})
-
-	// 注册统一认证路由
+	// 注册统一认证路由（最先注册，避免冲突）
 	authGroup := ws.engine.Group("")
 	ws.auth.RegisterRoutes(authGroup)
 
 	// 注册 API 路由（可选鉴权）
-	apiGroup := ws.engine.Group("")
+	apiGroup := ws.engine.Group("api")
 	apiGroup.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeBearer,
 		Required: false,
@@ -107,13 +73,41 @@ func (ws *WebServer) registerRoutes() {
 	ws.api.RegisterRoutes(apiGroup)
 
 	// 注册管理路由（需要管理员权限）
-	adminGroup := ws.engine.Group("")
+	adminGroup := ws.engine.Group("admin")
 	adminGroup.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleAdmin,
 	}, ws.jwtManager))
 	ws.admin.RegisterRoutes(adminGroup)
+
+	// 注册用户路由（需要用户权限）
+	userGroup := ws.engine.Group("user")
+	userGroup.Use(middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeBearer,
+		Required: true,
+		Role:     constant.RoleUser,
+	}, ws.jwtManager))
+	ws.user.RegisterRoutes(userGroup)
+
+	// 页面路由（最后注册，避免被API路由覆盖）
+	// 首页（登录页面）
+	ws.engine.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"name": ws.cfg.App.Name,
+		})
+	})
+
+	// 统一Home页面（需要认证）
+	ws.engine.GET("/home", middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeBearer,
+		Required: true,
+		Role:     constant.RoleUser,
+	}, ws.jwtManager), func(c *gin.Context) {
+		c.HTML(http.StatusOK, "home.html", gin.H{
+			"name": ws.cfg.App.Name,
+		})
+	})
 }
 
 func (ws *WebServer) Run(errC chan<- error) {

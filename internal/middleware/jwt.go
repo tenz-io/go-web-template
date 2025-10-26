@@ -20,6 +20,8 @@ import (
 const (
 	// JWTTokenCookieName JWT token cookie 名称
 	JWTTokenCookieName = "jwt_token"
+	userIdName         = "user_id"
+	roleName           = "role"
 )
 
 // JWT Claims 结构体
@@ -199,9 +201,37 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	}
 
 	// 设置用户信息到上下文
-	c.Set("user_id", claims.UserID)
-	c.Set("role", claims.Role)
+	c.Set(userIdName, claims.UserID)
+	c.Set(userIdName, claims.Role)
 	c.Next()
+}
+
+func GetUserInfoFromContext(c *gin.Context) (userID int64, role int32, err error) {
+	userIDInterface, exists := c.Get("user_id")
+	if !exists {
+		err = errors.New("user_id not found in context")
+		return
+	}
+
+	roleInterface, exists := c.Get("role")
+	if !exists {
+		err = errors.New("role not found in context")
+		return
+	}
+
+	var ok bool
+	if userID, ok = userIDInterface.(int64); !ok {
+		err = errors.New("invalid user_id type")
+		return
+	}
+
+	role, ok = roleInterface.(int32)
+	if !ok {
+		err = errors.New("invalid role type")
+		return
+	}
+
+	return userID, role, nil
 }
 
 // Cookie 认证（通用）

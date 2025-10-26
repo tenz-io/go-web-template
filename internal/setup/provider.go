@@ -44,8 +44,12 @@ func NewAuthController(userRepo repository.User, jwtManager *middleware.JWTManag
 	return controller.NewAuthServer(userRepo, jwtManager)
 }
 
-func NewWebController(cfg *config.Config, apiController *controller.ApiServer, adminController *controller.AdminServer, authController *controller.AuthServer, jwtManager *middleware.JWTManager) *controller.WebServer {
-	return controller.NewWebServer(cfg, apiController, adminController, authController, jwtManager)
+func NewUserController(userService service.User, jwtManager *middleware.JWTManager) *controller.UserServer {
+	return controller.NewUserServer(userService, jwtManager)
+}
+
+func NewWebController(cfg *config.Config, apiController *controller.ApiServer, adminController *controller.AdminServer, authController *controller.AuthServer, userController *controller.UserServer, jwtManager *middleware.JWTManager) *controller.WebServer {
+	return controller.NewWebServer(cfg, apiController, adminController, authController, userController, jwtManager)
 }
 
 // 主控制器提供者
