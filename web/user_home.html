@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>用户中心 - {{.name}}</title>
+    <!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/user.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 5px;
+            margin-bottom: 0.25rem;
+            transition: all 0.3s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .main-content {
+            padding: 2rem;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .stat-card .card-body {
+            padding: 1.5rem;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        .token-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .token-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        .token-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+        .token-value {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 5px;
+            word-break: break-all;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .token-actions {
+            margin-top: 0.5rem;
+        }
+        .btn-action {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+            border-radius: 5px;
+            margin-right: 0.5rem;
+        }
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+        .token-status {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .token-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .token-status.expired {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .token-status.revoked {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- 侧边栏 -->
+            <div class="col-md-3 col-lg-2 px-0">
+                <div class="sidebar">
+                    <div class="p-3">
+                        <h4 class="text-center mb-4">
+                            <i class="fas fa-user"></i> {{.name}}
+                        </h4>
+                        <nav class="nav flex-column">
+                            <a class="nav-link active" href="/user/home">
+                                <i class="fas fa-home"></i> 首页
+                            </a>
+                            <a class="nav-link" href="#" onclick="showTokenManagement()">
+                                <i class="fas fa-key"></i> Token管理
+                            </a>
+                            <a class="nav-link" href="#" onclick="showProfile()">
+                                <i class="fas fa-user-circle"></i> 个人资料
+                            </a>
+                            <a class="nav-link" href="#" onclick="showSettings()">
+                                <i class="fas fa-cog"></i> 设置
+                            </a>
+                            <hr class="my-3">
+                            <a class="nav-link" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> 退出登录
+                            </a>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主内容区域 -->
+            <div class="col-md-9 col-lg-10">
+                <!-- 顶部导航栏 -->
+                <nav class="navbar navbar-expand-lg">
+                    <div class="container-fluid">
+                        <h5 class="mb-0">用户中心</h5>
+                        <div class="user-info">
+                            <div class="user-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" id="userDisplayName">用户</div>
+                                <small class="text-muted" id="userEmail">user@example.com</small>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <!-- 主要内容 -->
+                <div class="main-content">
+                    <!-- 统计卡片 -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-3">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="totalTokens">0</div>
+                                    <div class="stat-label">总Token数</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="activeTokens">0</div>
+                                    <div class="stat-label">活跃Token</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="expiredTokens">0</div>
+                                    <div class="stat-label">已过期</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card stat-card">
+                                <div class="card-body text-center">
+                                    <div class="stat-number" id="revokedTokens">0</div>
+                                    <div class="stat-label">已撤销</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Token管理区域 -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-key"></i> Token管理
+                                    </h5>
+                                    <button class="btn btn-primary btn-sm" onclick="createToken()">
+                                        <i class="fas fa-plus"></i> 创建Token
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="tokenList">
+                                        <!-- Token列表将通过JavaScript动态加载 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建Token模态框 -->
+    <div class="modal fade" id="tokenModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建新Token</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tokenForm">
+                        <div class="mb-3">
+                            <label for="tokenName" class="form-label">Token名称</label>
+                            <input type="text" class="form-control" id="tokenName" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tokenDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="tokenDescription" name="description" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tokenExpiry" class="form-label">过期时间</label>
+                            <select class="form-select" id="tokenExpiry" name="expiry">
+                                <option value="1">1天</option>
+                                <option value="7">7天</option>
+                                <option value="30" selected>30天</option>
+                                <option value="90">90天</option>
+                                <option value="365">1年</option>
+                                <option value="0">永不过期</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveToken()">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Token详情模态框 -->
+    <div class="modal fade" id="tokenDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Token详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Token值</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="tokenValueDisplay" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
+                                <i class="fas fa-copy"></i> 复制
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">状态</label>
+                        <div id="tokenStatusDisplay"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">创建时间</label>
+                        <div id="tokenCreatedDisplay"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">过期时间</label>
+                        <div id="tokenExpiredDisplay"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-warning" onclick="revokeToken()">
+                        <i class="fas fa-ban"></i> 撤销Token
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/user.js"></script>
+</body>
+</html>

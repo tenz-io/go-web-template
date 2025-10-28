@@ -48,13 +48,17 @@ func NewJWTManager(cfg *config.JWTConfig) *JWTManager {
 	}
 }
 
-// 生成 JWT Token
 func (j *JWTManager) GenerateToken(userID int64, role int32) (string, error) {
+	return j.GenerateTokenWithExpire(userID, role, j.expireTime)
+}
+
+// 生成 JWT Token
+func (j *JWTManager) GenerateTokenWithExpire(userID int64, role int32, expDuration time.Duration) (string, error) {
 	now := time.Now()
 	claims := &Claims{
 		UserID: userID,
 		Role:   role,
-		Exp:    now.Add(j.expireTime).Unix(),
+		Exp:    now.Add(expDuration).Unix(),
 		Iat:    now.Unix(),
 	}
 
@@ -202,7 +206,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 
 	// 设置用户信息到上下文
 	c.Set(userIdName, claims.UserID)
-	c.Set(userIdName, claims.Role)
+	c.Set(roleName, claims.Role)
 	c.Next()
 }
 
@@ -257,7 +261,7 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 		// 管理员权限：必须是管理员角色
 		if claims.Role != int32(constant.RoleAdmin) {
 			logger.FromContext(c.Request.Context()).Warn("Admin authentication failed: insufficient role")
-			c.Redirect(http.StatusTemporaryRedirect, "/login")
+			c.Redirect(http.StatusTemporaryRedirect, "/login?error=权限不足")
 			c.Abort()
 			return
 		}
@@ -267,7 +271,7 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 	}
 
 	// 设置用户信息到上下文
-	c.Set("user_id", claims.UserID)
-	c.Set("role", claims.Role)
+	c.Set(userIdName, claims.UserID)
+	c.Set(roleName, claims.Role)
 	c.Next()
 }

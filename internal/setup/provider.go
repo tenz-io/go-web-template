@@ -5,7 +5,7 @@ import (
 	"go-web-template/internal/controller"
 	"go-web-template/internal/database"
 	"go-web-template/internal/middleware"
-	"go-web-template/internal/repository"
+	"go-web-template/internal/repository/dao"
 	"go-web-template/internal/service"
 )
 
@@ -22,17 +22,17 @@ func NewJWTManager(cfg *config.Config) *middleware.JWTManager {
 }
 
 // 仓库层提供者
-func NewUserRepository(db *database.DB) repository.User {
-	return repository.NewUserGORM(db.GetConn())
+func NewUserRepository(db *database.DB) dao.User {
+	return dao.NewUser(db.GetConn())
 }
 
 // 服务层提供者
-func NewUserService(cfg *config.Config, userRepo repository.User) service.User {
+func NewUserService(cfg *config.Config, userRepo dao.User) service.User {
 	return service.NewUser(cfg, userRepo)
 }
 
 // 控制器层提供者
-func NewApiController(userRepo repository.User, jwtManager *middleware.JWTManager) *controller.ApiServer {
+func NewApiController(userRepo dao.User, jwtManager *middleware.JWTManager) *controller.ApiServer {
 	return controller.NewApiServer(userRepo, jwtManager)
 }
 
@@ -40,7 +40,7 @@ func NewAdminController(userService service.User, jwtManager *middleware.JWTMana
 	return controller.NewAdminServer(userService, jwtManager)
 }
 
-func NewAuthController(userRepo repository.User, jwtManager *middleware.JWTManager) *controller.AuthServer {
+func NewAuthController(userRepo dao.User, jwtManager *middleware.JWTManager) *controller.AuthServer {
 	return controller.NewAuthServer(userRepo, jwtManager)
 }
 

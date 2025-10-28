@@ -28,6 +28,11 @@ func NewAdminServer(userService service.User, jwtManager *middleware.JWTManager)
 
 // 注册管理路由
 func (a *AdminServer) RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/home", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_home.html", gin.H{
+			"name": "go-web-template",
+		})
+	})
 	r.GET("/users", a.GetUsers)
 	r.POST("/add_user", a.AddUser)
 	r.DELETE("/delete_user", a.DeleteUser)

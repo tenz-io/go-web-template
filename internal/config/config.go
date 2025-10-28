@@ -24,10 +24,6 @@ type DBConfig struct {
 	// SQLite 配置
 	Path  string `yaml:"path" json:"path"`
 	Debug bool   `yaml:"debug" json:"debug"`
-	// 数据库连接池配置（SQLite 不需要，但保留兼容性）
-	MaxOpenConns    int           `yaml:"max_open_conns" json:"max_open_conns"`
-	MaxIdleConns    int           `yaml:"max_idle_conns" json:"max_idle_conns"`
-	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" json:"conn_max_lifetime"`
 }
 
 type JWTConfig struct {

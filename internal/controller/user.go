@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
@@ -26,11 +27,44 @@ func NewUserServer(userService service.User, jwtManager *middleware.JWTManager) 
 
 // 注册用户路由
 func (u *UserServer) RegisterRoutes(r *gin.RouterGroup) {
-	r.POST("/generate_token", u.GenerateToken)
+	// 用户页面路由
+	r.GET("/home", u.home)
+	r.POST("/generate_token", u.generateToken)
 }
 
-// GenerateToken 用户生成API token
-func (u *UserServer) GenerateToken(c *gin.Context) {
+func (u *UserServer) home(c *gin.Context) {
+	le := logger.FromContext(c.Request.Context())
+	userID, _, err := middleware.GetUserInfoFromContext(c)
+	if err != nil {
+		le.WithError(err).Error("failed to get user info from context")
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    401,
+				Message: "未授权访问",
+			},
+		})
+		return
+	}
+
+	userModel, err := u.userService.GetUser(c.Request.Context(), userID)
+	if err != nil {
+		le.WithError(err).Error("failed to get user model")
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    500,
+				Message: "获取用户信息失败",
+			},
+		})
+		return
+	}
+
+	c.HTML(http.StatusOK, "user_home.html", gin.H{
+		"name": userModel.Username,
+	})
+}
+
+// generateToken 用户生成API token
+func (u *UserServer) generateToken(c *gin.Context) {
 	var req request.UserGenerateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -45,8 +79,8 @@ func (u *UserServer) GenerateToken(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	le.Debug("user generate token called")
 
-	// 从 JWT token 中获取用户ID
-	userID, _, err := middleware.GetUserInfoFromContext(c)
+	// 从 JWT token 中获取用户ID和角色
+	userID, userRole, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
 		le.WithError(err).Error("failed to get user info from context")
 		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
@@ -58,8 +92,10 @@ func (u *UserServer) GenerateToken(c *gin.Context) {
 		return
 	}
 
+	expDuration := time.Duration(req.Expire) * time.Second
+
 	// 生成 JWT token
-	token, err := u.jwtManager.GenerateToken(userID, 0) // 普通用户角色
+	token, err := u.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
 	if err != nil {
 		le.Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

@@ -48,8 +48,7 @@ func (ws *WebServer) Init() error {
 	ws.engine.Use(gin.Recovery())
 	ws.engine.Use(middleware.CORS())
 
-	// 加载所有HTML模板文件
-	ws.engine.LoadHTMLGlob(ws.cfg.App.Web + "/*.html") // 根目录HTML
+	ws.engine.LoadHTMLGlob(ws.cfg.App.Web + "/*.html")
 	ws.engine.Static("/static", ws.cfg.App.Web+"/static")
 
 	// 注册路由
@@ -67,7 +66,7 @@ func (ws *WebServer) registerRoutes() {
 	apiGroup := ws.engine.Group("api")
 	apiGroup.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeBearer,
-		Required: false,
+		Required: true,
 		Role:     constant.RoleUser,
 	}, ws.jwtManager))
 	ws.api.RegisterRoutes(apiGroup)
@@ -84,29 +83,21 @@ func (ws *WebServer) registerRoutes() {
 	// 注册用户路由（需要用户权限）
 	userGroup := ws.engine.Group("user")
 	userGroup.Use(middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeBearer,
+		Type:     middleware.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleUser,
 	}, ws.jwtManager))
 	ws.user.RegisterRoutes(userGroup)
 
 	// 页面路由（最后注册，避免被API路由覆盖）
-	// 首页（登录页面）
+	// 首页 - 不需要认证
 	ws.engine.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
+		c.HTML(http.StatusOK, "index.html", gin.H{})
 	})
 
-	// 统一Home页面（需要认证）
-	ws.engine.GET("/home", middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeBearer,
-		Required: true,
-		Role:     constant.RoleUser,
-	}, ws.jwtManager), func(c *gin.Context) {
-		c.HTML(http.StatusOK, "home.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
+	// 登录页面 - 不需要认证
+	ws.engine.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", gin.H{})
 	})
 }
 

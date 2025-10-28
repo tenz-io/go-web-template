@@ -10,5 +10,5 @@ type UserChangePasswordRequest struct {
 
 // UserGenerateTokenRequest 用户生成API token请求
 type UserGenerateTokenRequest struct {
-	Expire int `json:"expire" binding:"required,min=1,max=86400"` // 过期时间（秒），最大24小时
+	Expire int `json:"expire" binding:"required,min=1"` // 过期时间（秒），最大24小时
 }

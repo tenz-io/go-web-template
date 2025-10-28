@@ -5,7 +5,6 @@ package response
 // LoginResponse 统一登录响应
 type LoginResponse struct {
 	BaseResponse
-	Token    string `json:"token,omitempty"`
 	Role     string `json:"role,omitempty"`
 	Redirect string `json:"redirect,omitempty"` // 登录后重定向地址
 }

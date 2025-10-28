@@ -1,12 +1,8 @@
 package database
 
 import (
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
+	"go-web-template/internal/util"
 	"os"
 	"path/filepath"
 
@@ -21,10 +17,9 @@ import (
 )
 
 const (
-	initAdminName     = "admin"                                        // 默认用户名
-	intiAdminPassword = "admin"                                        // 默认密码，生产环境建议修改
-	initAdminSalt     = "1a2b3c4d5e6f7g8h"                             // 固定盐值，生产环境建议使用随机盐值
-	initAdminPassHash = "j4rSB8DxWtMzguqCMysQZchdJV8983/u3nnbqWqFJDE=" // 默认密码的哈希值
+	initAdminName     = "admin"            // 默认用户名
+	intiAdminPassword = "admin"            // 默认密码，生产环境建议修改
+	initAdminSalt     = "1a2b3c4d5e6f7g8h" // 固定盐值，生产环境建议使用随机盐值
 )
 
 // DB GORM 数据库连接
@@ -55,15 +50,10 @@ func NewDB(cfg *config.DBConfig) (*DB, error) {
 	}
 
 	// 获取底层 sql.DB 对象进行连接池配置
-	sqlDB, err := conn.DB()
+	_, err = conn.DB()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
 	}
-
-	// 配置连接池
-	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
-	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
-	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
 	db := &DB{conn: conn}
 
@@ -116,6 +106,8 @@ func (db *DB) initDefaultAdmin() error {
 		return nil
 	}
 
+	initAdminPassHash := util.HashPasswordWithSalt(intiAdminPassword, initAdminSalt)
+
 	// 创建默认管理员账户
 	admin := &model.User{
 		Username: initAdminName,
@@ -132,22 +124,4 @@ func (db *DB) initDefaultAdmin() error {
 
 	logger.Info("Default admin user created: admin/admin")
 	return nil
-}
-
-// generateSalt 生成随机盐值
-func generateSalt() string {
-	bytes := make([]byte, 16)
-	rand.Read(bytes)
-	return hex.EncodeToString(bytes)
-}
-
-// hashPasswordWithSalt 使用 HMAC-SHA256 + 盐值哈希密码，并进行 base64 编码
-func hashPasswordWithSalt(password, salt string) (string, error) {
-	// 使用 HMAC-SHA256 生成哈希
-	h := hmac.New(sha256.New, []byte(salt))
-	h.Write([]byte(password))
-	hashedBytes := h.Sum(nil)
-
-	// 对哈希结果进行 base64 编码
-	return base64.StdEncoding.EncodeToString(hashedBytes), nil
 }

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"go-web-template/internal/repository/dao"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,19 +11,18 @@ import (
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
 	"go-web-template/internal/middleware"
-	"go-web-template/internal/repository"
 )
 
 // AuthServer 统一认证服务器
 type AuthServer struct {
-	userRepo   repository.User
+	userDao    dao.User
 	jwtManager *middleware.JWTManager
 }
 
 // NewAuthServer 创建统一认证服务器
-func NewAuthServer(userRepo repository.User, jwtManager *middleware.JWTManager) *AuthServer {
+func NewAuthServer(userDao dao.User, jwtManager *middleware.JWTManager) *AuthServer {
 	return &AuthServer{
-		userRepo:   userRepo,
+		userDao:    userDao,
 		jwtManager: jwtManager,
 	}
 }
@@ -36,6 +36,8 @@ func (a *AuthServer) RegisterRoutes(rg *gin.RouterGroup) {
 // Login 统一登录接口
 func (a *AuthServer) Login(c *gin.Context) {
 	var req request.LoginRequest
+
+	// 只支持JSON提交
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
@@ -53,7 +55,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 	le.Debug("auth login")
 
 	// 验证用户凭据
-	user, err := a.userRepo.VerifyUser(c.Request.Context(), req.Username, req.Password)
+	user, err := a.userDao.VerifyUser(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		le.Warn("user login failed")
 		c.JSON(http.StatusOK, response.LoginResponse{
@@ -78,21 +80,27 @@ func (a *AuthServer) Login(c *gin.Context) {
 		return
 	}
 
-	// 统一重定向到home页面
-	redirect := "/home"
+	// 设置Cookie
+	c.SetCookie(middleware.JWTTokenCookieName, token, 3600*24, "/", "", false, true)
 
-	// 设置 Cookie（用于管理后台）
+	// 根据角色重定向到不同页面
+	redirect := "/user/home"
 	if user.Role == int32(constant.RoleAdmin) {
-		c.SetCookie(middleware.JWTTokenCookieName, token, 3600*24, "/", "", false, true)
+		redirect = "/admin/home"
 	}
 
-	le.Info("user login successful")
+	le.WithFields(logger.Fields{
+		"user_id":  user.ID,
+		"role":     constant.Role(user.Role).String(),
+		"redirect": redirect,
+	}).Info("user login successful")
+
+	// 返回JSON响应
 	c.JSON(http.StatusOK, response.LoginResponse{
 		BaseResponse: response.BaseResponse{
 			Code:    0,
 			Message: "登录成功",
 		},
-		Token:    token,
 		Role:     constant.Role(user.Role).String(),
 		Redirect: redirect,
 	})

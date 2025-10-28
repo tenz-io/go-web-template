@@ -2,19 +2,15 @@ package service
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
+	"go-web-template/internal/repository/dao"
+	"go-web-template/internal/util"
 
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
 	"go-web-template/internal/constant"
 	"go-web-template/internal/model"
-	"go-web-template/internal/repository"
 )
 
 // User 用户服务接口
@@ -33,7 +29,7 @@ type User interface {
 
 func NewUser(
 	cfg *config.Config,
-	userRepo repository.User,
+	userRepo dao.User,
 ) User {
 	return &user{
 		cfg:      cfg,
@@ -43,7 +39,7 @@ func NewUser(
 
 type user struct {
 	cfg      *config.Config
-	userRepo repository.User
+	userRepo dao.User
 }
 
 // VerifyUser 验证用户凭据
@@ -90,17 +86,13 @@ func (u *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (*m
 	}
 
 	// 生成盐值
-	salt := generateSalt()
+	salt := util.GenerateSalt(16)
 
 	// 哈希密码（带盐值）
-	hashedPassword, err := hashPasswordWithSalt(req.Password, salt)
-	if err != nil {
-		le.Error("failed to hash password")
-		return nil, fmt.Errorf("密码哈希失败")
-	}
+	hashedPassword := util.HashPasswordWithSalt(req.Password, salt)
 
 	// 创建用户
-	user := &model.User{
+	userModel := &model.User{
 		Username: req.Username,
 		Password: hashedPassword,
 		Salt:     salt,
@@ -109,14 +101,14 @@ func (u *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (*m
 		Profile:  "",
 	}
 
-	err = u.userRepo.Create(ctx, user)
+	err = u.userRepo.Create(ctx, userModel)
 	if err != nil {
 		le.Error("failed to create user")
 		return nil, err
 	}
 
 	le.Info("user created successfully")
-	return user, nil
+	return userModel, nil
 }
 
 // UpdatePassword 更新用户密码
@@ -124,35 +116,24 @@ func (u *user) UpdatePassword(ctx context.Context, userID int64, req *model.Upda
 	le := logger.FromContext(ctx)
 
 	// 获取用户信息
-	user, err := u.userRepo.GetByID(ctx, userID)
+	userModel, err := u.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return err
 	}
 
 	// 解码 base64 编码的哈希值
-	hashedBytes, err := base64.StdEncoding.DecodeString(user.Password)
-	if err != nil {
-		return fmt.Errorf("invalid password format")
-	}
+	hashedOldPass := util.HashPasswordWithSalt(req.OldPassword, userModel.Salt)
 
 	// 验证旧密码（使用 HMAC-SHA256 + 盐值）
-	h := hmac.New(sha256.New, []byte(user.Salt))
-	h.Write([]byte(req.OldPassword))
-	expectedHash := h.Sum(nil)
-
-	if !hmac.Equal(hashedBytes, expectedHash) {
-		return fmt.Errorf("invalid old password")
+	if hashedOldPass != userModel.Password {
+		le.Debug("old password is incorrect")
+		return fmt.Errorf("旧密码不正确")
 	}
 
-	// 哈希新密码（带盐值）
-	hashedPassword, err := hashPasswordWithSalt(req.NewPassword, user.Salt)
-	if err != nil {
-		le.Error("failed to hash new password")
-		return fmt.Errorf("密码哈希失败")
-	}
+	hashedNewPass := util.HashPasswordWithSalt(req.NewPassword, userModel.Salt)
 
 	// 更新密码
-	err = u.userRepo.UpdatePassword(ctx, userID, hashedPassword)
+	err = u.userRepo.UpdatePassword(ctx, userID, hashedNewPass)
 	if err != nil {
 		le.Error("failed to update password")
 		return err
@@ -195,22 +176,4 @@ func (u *user) DeleteUser(ctx context.Context, userID int64) error {
 
 	le.Info("user deleted successfully")
 	return nil
-}
-
-// generateSalt 生成随机盐值
-func generateSalt() string {
-	bytes := make([]byte, 16)
-	rand.Read(bytes)
-	return hex.EncodeToString(bytes)
-}
-
-// hashPasswordWithSalt 使用 HMAC-SHA256 + 盐值哈希密码，并进行 base64 编码
-func hashPasswordWithSalt(password, salt string) (string, error) {
-	// 使用 HMAC-SHA256 生成哈希
-	h := hmac.New(sha256.New, []byte(salt))
-	h.Write([]byte(password))
-	hashedBytes := h.Sum(nil)
-
-	// 对哈希结果进行 base64 编码
-	return base64.StdEncoding.EncodeToString(hashedBytes), nil
 }
