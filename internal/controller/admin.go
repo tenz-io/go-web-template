@@ -36,6 +36,7 @@ func (a *AdminServer) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/users", a.GetUsers)
 	r.POST("/add_user", a.AddUser)
 	r.DELETE("/delete_user", a.DeleteUser)
+	r.POST("/change_password", a.ChangePassword)
 }
 
 // GetUsers 获取用户列表
@@ -67,7 +68,6 @@ func (a *AdminServer) GetUsers(c *gin.Context) {
 			"id":         user.ID,
 			"username":   user.Username,
 			"role":       constant.Role(user.Role).String(),
-			"email":      user.Email,
 			"created_at": user.CreatedAt,
 		})
 	}
@@ -118,7 +118,6 @@ func (a *AdminServer) AddUser(c *gin.Context) {
 		Username: req.Username,
 		Password: req.Password,
 		Role:     int32(role),
-		Email:    req.Email,
 	})
 	if err != nil {
 		le.Error("failed to create user")
@@ -175,6 +174,55 @@ func (a *AdminServer) DeleteUser(c *gin.Context) {
 		BaseResponse: response.BaseResponse{
 			Code:    0,
 			Message: "用户删除成功",
+		},
+	})
+}
+
+// ChangePassword 管理员修改自身密码
+func (a *AdminServer) ChangePassword(c *gin.Context) {
+	var req request.AdminChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "请求参数错误",
+			},
+		})
+		return
+	}
+
+	adminID, _, err := middleware.GetUserInfoFromContext(c)
+	if err != nil {
+		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get admin info from context")
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    401,
+				Message: "未授权访问",
+			},
+		})
+		return
+	}
+
+	updateReq := &model.UpdatePasswordRequest{
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
+
+	if err := a.userService.UpdatePassword(c.Request.Context(), adminID, updateReq); err != nil {
+		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to update admin password")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    0,
+			Message: "密码修改成功",
 		},
 	})
 }

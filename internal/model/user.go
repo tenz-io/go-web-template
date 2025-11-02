@@ -13,7 +13,6 @@ type User struct {
 	Password  string         `json:"-" gorm:"size:255;not null"`           // 密码不返回给前端
 	Salt      string         `json:"-" gorm:"size:32;not null;default:''"` // 密码盐值
 	Role      int32          `json:"role" gorm:"not null;default:0"`
-	Email     string         `json:"email" gorm:"uniqueIndex;size:100;not null"`
 	Profile   string         `json:"profile" gorm:"type:text"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
@@ -25,7 +24,6 @@ type CreateUserRequest struct {
 	Username string `json:"username" binding:"required"`
 	Password string `json:"password" binding:"required,min=6"`
 	Role     int32  `json:"role" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
 }
 
 // UpdatePasswordRequest 更新密码请求

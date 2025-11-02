@@ -177,15 +177,6 @@ const Utils = {
     },
 
     /**
-     * 验证邮箱格式
-     * @param {string} email - 邮箱地址
-     */
-    isValidEmail: function(email) {
-        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return re.test(email);
-    },
-
-    /**
      * 验证密码强度
      * @param {string} password - 密码
      */
@@ -216,7 +207,8 @@ const API = {
         
         const response = await fetch(url, {
             method: 'GET',
-            headers: { ...defaultHeaders, ...headers }
+            headers: { ...defaultHeaders, ...headers },
+            credentials: 'include'
         });
         
         return await response.json();
@@ -240,7 +232,8 @@ const API = {
         const response = await fetch(url, {
             method: 'POST',
             headers: { ...defaultHeaders, ...headers },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: 'include'
         });
         
         return await response.json();
@@ -264,7 +257,8 @@ const API = {
         const response = await fetch(url, {
             method: 'DELETE',
             headers: { ...defaultHeaders, ...headers },
-            body: JSON.stringify(data)
+            body: JSON.stringify(data),
+            credentials: 'include'
         });
         
         return await response.json();

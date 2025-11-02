@@ -63,7 +63,6 @@ type BaseResponse struct {
 // internal/controller/request/user.go
 type CreateUserRequest struct {
     Username string `json:"username" binding:"required"`
-    Email    string `json:"email" binding:"required,email"`
     Password string `json:"password" binding:"required,min=6"`
 }
 ```
@@ -80,7 +79,6 @@ type CreateUserResponse struct {
 type UserData struct {
     ID       int    `json:"id"`
     Username string `json:"username"`
-    Email    string `json:"email"`
 }
 ```
 
@@ -115,7 +113,6 @@ func (u *UserController) CreateUser(c *gin.Context) {
 - `required`: 必填字段
 - `min=n`: 最小长度/值
 - `max=n`: 最大长度/值
-- `email`: 邮箱格式
 - `oneof=value1 value2`: 枚举值
 - `omitempty`: 空值时不验证
 
@@ -124,7 +121,6 @@ func (u *UserController) CreateUser(c *gin.Context) {
 ```go
 type UserRequest struct {
     Username string `json:"username" binding:"required,min=3,max=20"`
-    Email    string `json:"email" binding:"required,email"`
     Age      int    `json:"age" binding:"min=1,max=120"`
     Status   string `json:"status" binding:"oneof=active inactive"`
 }

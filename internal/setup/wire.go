@@ -18,8 +18,10 @@ func InitializeControllers(
 		NewJWTManager,
 		// 仓库层
 		NewUserRepository,
+		NewTokenRepository,
 		// 服务层
 		NewUserService,
+		NewTokenService,
 		// 控制器层
 		NewApiController,
 		NewAdminController,

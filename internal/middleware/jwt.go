@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -15,6 +16,7 @@ import (
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
+	"go-web-template/internal/model"
 )
 
 const (
@@ -146,8 +148,13 @@ type AuthConfig struct {
 	Role     constant.Role `json:"role"`
 }
 
+// TokenValidator API Token 校验接口
+type TokenValidator interface {
+	ValidateToken(ctx context.Context, token string) (*model.APIToken, error)
+}
+
 // 鉴权中间件
-func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
+func Auth(config AuthConfig, jwtManager *JWTManager, tokenValidator TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !config.Required {
 			c.Next()
@@ -158,7 +165,7 @@ func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 		case AuthTypeNone:
 			c.Next()
 		case AuthTypeBearer:
-			handleBearerAuth(c, jwtManager)
+			handleBearerAuth(c, jwtManager, tokenValidator)
 		case AuthTypeCookie:
 			handleCookieAuth(c, jwtManager, config.Role)
 		default:
@@ -172,7 +179,7 @@ func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 }
 
 // Bearer Token 认证
-func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
+func handleBearerAuth(c *gin.Context, jwtManager *JWTManager, tokenValidator TokenValidator) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -196,6 +203,36 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	claims, err := jwtManager.ValidateToken(token)
 	if err != nil {
 		logger.FromContext(c.Request.Context()).Warn("JWT validation failed")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    401,
+			"message": "无效的 token",
+		})
+		c.Abort()
+		return
+	}
+
+	if tokenValidator == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    401,
+			"message": "未启用 Token 验证",
+		})
+		c.Abort()
+		return
+	}
+
+	record, err := tokenValidator.ValidateToken(c.Request.Context(), token)
+	if err != nil {
+		logger.FromContext(c.Request.Context()).WithError(err).Warn("API token validation failed")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"code":    401,
+			"message": "无效的 token",
+		})
+		c.Abort()
+		return
+	}
+
+	if record.UserID != claims.UserID {
+		logger.FromContext(c.Request.Context()).Warn("API token user mismatch")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    401,
 			"message": "无效的 token",

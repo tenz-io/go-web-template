@@ -118,6 +118,9 @@
                             <a class="nav-link" href="#" onclick="AdminPage.showTab('settings')">
                                 <i class="fas fa-cog"></i> 系统设置
                             </a>
+                            <a class="nav-link" href="#" onclick="AdminPage.showChangePasswordModal()">
+                                <i class="fas fa-key"></i> 修改密码
+                            </a>
                             <a class="nav-link" href="#" onclick="Utils.showAlert('日志功能开发中...', 'info')">
                                 <i class="fas fa-file-alt"></i> 系统日志
                             </a>
@@ -142,7 +145,7 @@
                             </div>
                             <div>
                                 <div class="fw-bold">管理员</div>
-                                <small class="text-muted">admin@example.com</small>
+                                <small class="text-muted">默认管理员</small>
                             </div>
                         </div>
                     </div>
@@ -205,7 +208,6 @@
                                                 <tr>
                                                     <th>ID</th>
                                                     <th>用户名</th>
-                                                    <th>邮箱</th>
                                                     <th>角色</th>
                                                     <th>状态</th>
                                                     <th>创建时间</th>
@@ -242,10 +244,6 @@
                             <input type="text" class="form-control" id="userUsername" name="username" required>
                         </div>
                         <div class="mb-3">
-                            <label for="userEmail" class="form-label">邮箱</label>
-                            <input type="email" class="form-control" id="userEmail" name="email" required>
-                        </div>
-                        <div class="mb-3">
                             <label for="userPassword" class="form-label">密码</label>
                             <input type="password" class="form-control" id="userPassword" name="password">
                         </div>
@@ -261,6 +259,38 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="submit" class="btn btn-primary" form="addUserForm">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码模态框 -->
+    <div class="modal fade" id="adminChangePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">修改管理员密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminChangePasswordForm">
+                        <div class="mb-3">
+                            <label for="adminOldPassword" class="form-label">当前密码</label>
+                            <input type="password" class="form-control" id="adminOldPassword" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminNewPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="adminNewPassword" name="new_password" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminConfirmPassword" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="adminConfirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" form="adminChangePasswordForm">保存</button>
                 </div>
             </div>
         </div>

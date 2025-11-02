@@ -5,7 +5,6 @@ package request
 // UserCreateRequest 创建用户请求
 type UserCreateRequest struct {
 	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=6"`
 	Age      int    `json:"age" binding:"min=1,max=120"`
 }
@@ -14,7 +13,6 @@ type UserCreateRequest struct {
 type UserUpdateRequest struct {
 	ID       int    `json:"id" binding:"required"`
 	Username string `json:"username,omitempty"`
-	Email    string `json:"email,omitempty" binding:"omitempty,email"`
 	Age      int    `json:"age,omitempty" binding:"omitempty,min=1,max=120"`
 }
 

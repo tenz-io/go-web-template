@@ -12,7 +12,6 @@ type UserResponse struct {
 type UserData struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
-	Email    string `json:"email"`
 	Age      int    `json:"age"`
 	Status   string `json:"status"`
 	CreateAt string `json:"create_at"`

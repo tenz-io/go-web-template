@@ -8,7 +8,8 @@ type UserChangePasswordRequest struct {
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
-// UserGenerateTokenRequest 用户生成API token请求
-type UserGenerateTokenRequest struct {
-	Expire int `json:"expire" binding:"required,min=1"` // 过期时间（秒），最大24小时
+// UserCreateTokenRequest 用户生成API token请求
+type UserCreateTokenRequest struct {
+	Name   string `json:"name" binding:"required"`
+	Expire int    `json:"expire" binding:"required,min=1"` // 过期时间（秒）
 }

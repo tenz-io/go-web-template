@@ -148,20 +148,14 @@
                             <i class="fas fa-user"></i> {{.name}}
                         </h4>
                         <nav class="nav flex-column">
-                            <a class="nav-link active" href="/user/home">
+                            <a class="nav-link active" href="#" data-tab="dashboard">
                                 <i class="fas fa-home"></i> 首页
                             </a>
-                            <a class="nav-link" href="#" onclick="showTokenManagement()">
+                            <a class="nav-link" href="#" data-tab="tokens">
                                 <i class="fas fa-key"></i> Token管理
                             </a>
-                            <a class="nav-link" href="#" onclick="showProfile()">
-                                <i class="fas fa-user-circle"></i> 个人资料
-                            </a>
-                            <a class="nav-link" href="#" onclick="showSettings()">
-                                <i class="fas fa-cog"></i> 设置
-                            </a>
                             <hr class="my-3">
-                            <a class="nav-link" href="#" onclick="logout()">
+                            <a class="nav-link" href="#" onclick="UserPage.logout()">
                                 <i class="fas fa-sign-out-alt"></i> 退出登录
                             </a>
                         </nav>
@@ -180,8 +174,8 @@
                                 <i class="fas fa-user"></i>
                             </div>
                             <div>
-                                <div class="fw-bold" id="userDisplayName">用户</div>
-                                <small class="text-muted" id="userEmail">user@example.com</small>
+                                <div class="fw-bold" id="userDisplayName">{{.name}}</div>
+                                <small class="text-muted" id="userRole">{{.role}}</small>
                             </div>
                         </div>
                     </div>
@@ -225,22 +219,59 @@
                         </div>
                     </div>
 
-                    <!-- Token管理区域 -->
+                    <!-- Token管理 & 修改密码 -->
                     <div class="row">
-                        <div class="col-12">
+                        <div class="col-lg-8 mb-3">
                             <div class="card">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">
                                         <i class="fas fa-key"></i> Token管理
                                     </h5>
-                                    <button class="btn btn-primary btn-sm" onclick="createToken()">
+                                    <button class="btn btn-primary btn-sm" onclick="UserPage.showGenerateTokenModal()">
                                         <i class="fas fa-plus"></i> 创建Token
                                     </button>
                                 </div>
                                 <div class="card-body">
-                                    <div id="tokenList">
-                                        <!-- Token列表将通过JavaScript动态加载 -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>名称</th>
+                                                    <th>创建时间</th>
+                                                    <th>过期时间</th>
+                                                    <th>状态</th>
+                                                    <th>操作</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tokensTableBody">
+                                                <tr><td colspan="5" class="text-center text-muted">暂无Token</td></tr>
+                                            </tbody>
+                                        </table>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 mb-3">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0"><i class="fas fa-lock"></i> 修改密码</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="changePasswordForm">
+                                        <div class="mb-3">
+                                            <label for="oldPassword" class="form-label">当前密码</label>
+                                            <input type="password" class="form-control" id="oldPassword" name="old_password" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="newPassword" class="form-label">新密码</label>
+                                            <input type="password" class="form-control" id="newPassword" name="new_password" minlength="6" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="confirmPassword" class="form-label">确认新密码</label>
+                                            <input type="password" class="form-control" id="confirmPassword" minlength="6" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">保存修改</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -251,80 +282,65 @@
     </div>
 
     <!-- 创建Token模态框 -->
-    <div class="modal fade" id="tokenModal" tabindex="-1">
+    <div class="modal fade" id="generateTokenModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">创建新Token</h5>
+                    <h5 class="modal-title">创建新的 API Token</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="tokenForm">
+                    <form id="generateTokenForm">
                         <div class="mb-3">
-                            <label for="tokenName" class="form-label">Token名称</label>
-                            <input type="text" class="form-control" id="tokenName" name="name" required>
+                            <label for="tokenName" class="form-label">Token 名称</label>
+                            <input type="text" class="form-control" id="tokenName" name="tokenName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="tokenDescription" class="form-label">描述</label>
-                            <textarea class="form-control" id="tokenDescription" name="description" rows="3"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label for="tokenExpiry" class="form-label">过期时间</label>
-                            <select class="form-select" id="tokenExpiry" name="expiry">
-                                <option value="1">1天</option>
-                                <option value="7">7天</option>
-                                <option value="30" selected>30天</option>
-                                <option value="90">90天</option>
-                                <option value="365">1年</option>
-                                <option value="0">永不过期</option>
+                            <label for="tokenExpire" class="form-label">有效期</label>
+                            <select class="form-select" id="tokenExpire" name="expire">
+                                <option value="3600">1 小时</option>
+                                <option value="86400">1 天</option>
+                                <option value="604800">7 天</option>
+                                <option value="2592000" selected>30 天</option>
                             </select>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" onclick="saveToken()">创建</button>
+                    <button type="submit" class="btn btn-primary" form="generateTokenForm">创建</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Token详情模态框 -->
-    <div class="modal fade" id="tokenDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <!-- Token 展示模态框 -->
+    <div class="modal fade" id="tokenDisplayModal" tabindex="-1">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Token详情</h5>
+                    <h5 class="modal-title">新的 API Token</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-warning" role="alert">
+                        该 Token 只会显示一次，请妥善保存。
+                    </div>
                     <div class="mb-3">
-                        <label class="form-label">Token值</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="tokenValueDisplay" readonly>
-                            <button class="btn btn-outline-secondary" type="button" onclick="copyToken()">
+                        <label class="form-label" for="generatedToken">Token 值</label>
+        					<div class="input-group">
+                            <input type="text" class="form-control" id="generatedToken" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="UserPage.copyToken()">
                                 <i class="fas fa-copy"></i> 复制
                             </button>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">状态</label>
-                        <div id="tokenStatusDisplay"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">创建时间</label>
-                        <div id="tokenCreatedDisplay"></div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">过期时间</label>
-                        <div id="tokenExpiredDisplay"></div>
-                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-warning" onclick="revokeToken()">
-                        <i class="fas fa-ban"></i> 撤销Token
+                    <button type="button" class="btn btn-outline-secondary" onclick="UserPage.downloadToken()">
+                        <i class="fas fa-download"></i> 下载
                     </button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">完成</button>
                 </div>
             </div>
         </div>

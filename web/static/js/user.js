@@ -5,14 +5,15 @@
 // 用户页面功能
 const UserPage = {
     currentTab: 'dashboard',
-    
+    tokens: [],
+
     /**
      * 初始化页面
      */
     init: function() {
         this.bindEvents();
-        this.loadUserInfo();
-        this.loadDashboard();
+        this.loadTokens();
+        this.updateDashboard();
     },
 
     /**
@@ -51,46 +52,31 @@ const UserPage = {
         // 根据标签页加载相应数据
         switch(tabName) {
             case 'dashboard':
-                this.loadDashboard();
+                this.updateDashboard();
                 break;
             case 'tokens':
                 this.loadTokens();
                 break;
-            case 'profile':
-                this.loadProfile();
-                break;
-        }
-    },
-
-    /**
-     * 加载用户信息
-     */
-    loadUserInfo: async function() {
-        try {
-            // 从token中解析用户信息，或者从API获取
-            const token = Utils.getToken();
-            if (token) {
-                // 这里应该解析JWT token获取用户信息
-                $('#userInfo').text('当前用户');
-                $('#userRole').text('普通用户');
-                $('#userCreated').text(Utils.formatDate(new Date()));
-            }
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
         }
     },
 
     /**
      * 加载仪表盘数据
      */
-    loadDashboard: async function() {
-        try {
-            // 加载token统计
-            const tokenCount = await this.getTokenCount();
-            $('#tokenCount').text(`${tokenCount} 个活跃Token`);
-        } catch (error) {
-            console.error('加载仪表盘数据失败:', error);
-        }
+    updateDashboard: function() {
+        const now = new Date();
+        const total = this.tokens.length;
+        const active = this.tokens.filter(token => {
+            if (!token.expires_at) return true;
+            return new Date(token.expires_at) > now;
+        }).length;
+        const expired = total - active;
+
+        $('#totalTokens').text(total);
+        $('#activeTokens').text(active);
+        $('#expiredTokens').text(expired);
+        $('#revokedTokens').text(0);
+        $('#tokenCount').text(`${active} 个活跃Token`);
     },
 
     /**
@@ -98,18 +84,15 @@ const UserPage = {
      */
     loadTokens: async function() {
         try {
-            // 模拟数据，实际应该从API获取
-            const tokens = [
-                {
-                    id: 1,
-                    name: 'API访问Token',
-                    created_at: new Date(),
-                    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                    status: 'active'
-                }
-            ];
-            
-            this.renderTokensTable(tokens);
+            const response = await API.get('/user/api_tokens');
+
+            if (response.code === 0) {
+                this.tokens = Array.isArray(response.data?.tokens) ? response.data.tokens : [];
+                this.renderTokensTable(this.tokens);
+                this.updateDashboard();
+            } else {
+                Utils.showAlert('加载Token列表失败: ' + response.message, 'danger');
+            }
         } catch (error) {
             console.error('加载Token列表失败:', error);
             Utils.showAlert('加载Token列表失败', 'danger');
@@ -132,17 +115,14 @@ const UserPage = {
             <tr>
                 <td>${token.name}</td>
                 <td>${Utils.formatDate(token.created_at)}</td>
-                <td>${Utils.formatDate(token.expires_at)}</td>
+                <td>${token.expires_at ? Utils.formatDate(token.expires_at) : '永久有效'}</td>
                 <td>
-                    <span class="badge ${token.status === 'active' ? 'bg-success' : 'bg-secondary'}">
-                        ${token.status === 'active' ? '活跃' : '已过期'}
+                    <span class="badge ${this.isTokenActive(token) ? 'bg-success' : 'bg-secondary'}">
+                        ${this.isTokenActive(token) ? '活跃' : '已过期'}
                     </span>
                 </td>
                 <td>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="UserPage.viewToken(${token.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
                         <button class="btn btn-outline-danger" onclick="UserPage.deleteToken(${token.id})">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -171,7 +151,7 @@ const UserPage = {
         
         const data = {
             name: formData.get('tokenName'),
-            expire: parseInt(formData.get('expire'))
+            expire: parseInt(formData.get('expire'), 10)
         };
 
         // 验证输入
@@ -180,15 +160,22 @@ const UserPage = {
             return;
         }
 
+        if (!Number.isFinite(data.expire) || data.expire <= 0) {
+            Utils.showAlert('请选择有效的过期时间', 'warning');
+            return;
+        }
+
         try {
-            Utils.showLoading(true);
+            const submitSelector = '#generateTokenForm button[type="submit"]';
+            Utils.showLoading(true, submitSelector);
             
-            const response = await API.post('/user/generate_token', data);
-            
+            const response = await API.post('/user/api_tokens', data);
+
             if (response.code === 0) {
                 // 显示生成的Token
                 this.showGeneratedToken(response.token);
                 $('#generateTokenModal').modal('hide');
+                form[0].reset();
                 this.loadTokens();
             } else {
                 Utils.showAlert('生成Token失败: ' + response.message, 'danger');
@@ -197,7 +184,8 @@ const UserPage = {
             console.error('生成Token失败:', error);
             Utils.showAlert('生成Token失败', 'danger');
         } finally {
-            Utils.showLoading(false);
+            const submitSelector = '#generateTokenForm button[type="submit"]';
+            Utils.showLoading(false, submitSelector);
         }
     },
 
@@ -238,21 +226,21 @@ const UserPage = {
      * 查看Token
      * @param {number} tokenId - Token ID
      */
-    viewToken: function(tokenId) {
-        Utils.showAlert('查看Token功能开发中...', 'info');
+    // 判断 token 是否有效
+    isTokenActive: function(token) {
+        if (!token.expires_at) {
+            return true;
+        }
+        return new Date(token.expires_at) > new Date();
     },
 
-    /**
-     * 删除Token
-     * @param {number} tokenId - Token ID
-     */
     deleteToken: async function(tokenId) {
         if (!confirm('确定要删除这个Token吗？')) {
             return;
         }
 
         try {
-            const response = await API.delete('/user/delete_token', { token_id: tokenId });
+            const response = await API.delete(`/user/api_tokens/${tokenId}`);
             
             if (response.code === 0) {
                 Utils.showAlert('Token删除成功', 'success');
@@ -268,14 +256,6 @@ const UserPage = {
 
     /**
      * 加载个人设置
-     */
-    loadProfile: function() {
-        // 加载个人设置数据
-        console.log('加载个人设置');
-    },
-
-    /**
-     * 处理密码修改
      */
     handleChangePassword: async function(e) {
         e.preventDefault();
@@ -296,7 +276,8 @@ const UserPage = {
         }
 
         try {
-            Utils.showLoading(true);
+            const submitSelector = '#changePasswordForm button[type="submit"]';
+            Utils.showLoading(true, submitSelector);
             
             const response = await API.post('/user/change_password', data);
             
@@ -310,7 +291,8 @@ const UserPage = {
             console.error('密码修改失败:', error);
             Utils.showAlert('密码修改失败', 'danger');
         } finally {
-            Utils.showLoading(false);
+            const submitSelector = '#changePasswordForm button[type="submit"]';
+            Utils.showLoading(false, submitSelector);
         }
     },
 
@@ -325,14 +307,12 @@ const UserPage = {
     /**
      * 获取Token数量
      */
-    getTokenCount: async function() {
-        try {
-            // 模拟API调用
-            return 1;
-        } catch (error) {
-            console.error('获取Token数量失败:', error);
-            return 0;
-        }
+    getTokenCount: function() {
+        const now = new Date();
+        return this.tokens.filter(token => {
+            if (!token.expires_at) return true;
+            return new Date(token.expires_at) > now;
+        }).length;
     },
 
     /**
@@ -340,10 +320,9 @@ const UserPage = {
      */
     logout: function() {
         if (confirm('确定要退出登录吗？')) {
-            // 清除token
-            Utils.clearToken();
-            // 跳转到登录页
-            window.location.href = '/login';
+            API.post('/logout', {}).finally(() => {
+                window.location.href = '/login';
+            });
         }
     }
 };

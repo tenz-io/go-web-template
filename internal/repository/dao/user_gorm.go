@@ -79,7 +79,7 @@ func (r *user) VerifyUser(ctx context.Context, username, password string) (*mode
 func (r *user) List(ctx context.Context, limit, offset int) ([]*model.User, error) {
 	var users []*model.User
 	err := r.db.WithContext(ctx).
-		Select("id, username, role, email, profile, created_at, updated_at").
+		Select("id, username, role, profile, created_at, updated_at").
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).

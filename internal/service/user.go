@@ -104,7 +104,6 @@ func (u *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (*m
 		Password: hashedPassword,
 		Salt:     salt,
 		Role:     req.Role,
-		Email:    req.Email,
 		Profile:  "",
 	}
 

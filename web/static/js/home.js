@@ -163,7 +163,7 @@ const HomePage = {
         const tbody = $('#usersTableBody');
         
         if (users.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center text-muted">暂无用户数据</td></tr>');
+            tbody.html('<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>');
             return;
         }
         
@@ -171,7 +171,6 @@ const HomePage = {
             <tr>
                 <td>${user.id}</td>
                 <td>${user.username}</td>
-                <td>${user.email || '-'}</td>
                 <td>
                     <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
                         ${user.role === 'admin' ? '管理员' : '普通用户'}
@@ -308,17 +307,11 @@ const HomePage = {
         const data = {
             username: formData.get('username'),
             password: formData.get('password'),
-            email: formData.get('email'),
             role: formData.get('role')
         };
 
-        if (!data.username || !data.password || !data.email) {
+        if (!data.username || !data.password) {
             Utils.showAlert('请填写完整信息', 'warning');
-            return;
-        }
-
-        if (!Utils.isValidEmail(data.email)) {
-            Utils.showAlert('请输入正确的邮箱地址', 'warning');
             return;
         }
 
@@ -364,7 +357,7 @@ const HomePage = {
         try {
             Utils.showLoading(true);
             
-            const response = await API.post('/user/generate_token', data);
+            const response = await API.post('/user/api_tokens', data);
             
             if (response.code === 0) {
                 Utils.showAlert('Token生成成功', 'success');
@@ -451,7 +444,7 @@ const HomePage = {
         }
 
         try {
-            const response = await API.delete('/user/delete_token', { token_id: tokenId });
+            const response = await API.delete(`/user/api_tokens/${tokenId}`);
             
             if (response.code === 0) {
                 Utils.showAlert('Token删除成功', 'success');

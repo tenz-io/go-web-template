@@ -88,7 +88,19 @@ func (db *DB) Close() error {
 // initTables 初始化数据库表
 func (db *DB) initTables() error {
 	// 自动迁移用户表
-	return db.conn.AutoMigrate(&model.User{})
+	if err := db.conn.AutoMigrate(&model.User{}, &model.APIToken{}); err != nil {
+		return err
+	}
+
+	// 移除已废弃的邮箱列
+	migrator := db.conn.Migrator()
+	if migrator.HasColumn(&model.User{}, "email") {
+		if err := migrator.DropColumn(&model.User{}, "email"); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // initDefaultAdmin 初始化默认管理员账户
@@ -114,7 +126,6 @@ func (db *DB) initDefaultAdmin() error {
 		Password: initAdminPassHash,
 		Salt:     initAdminSalt,
 		Role:     int32(constant.RoleAdmin),
-		Email:    "admin@example.com",
 		Profile:  "系统管理员",
 	}
 

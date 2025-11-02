@@ -27,7 +27,7 @@ const AdminPage = {
 
         // 表单提交
         $('#addUserForm').submit(this.handleAddUser.bind(this));
-        $('#settingsForm').submit(this.handleSettings.bind(this));
+        $('#adminChangePasswordForm').submit(this.handleChangePassword.bind(this));
         
         // 搜索功能
         $('#searchInput').on('input', this.debounce(this.searchUsers.bind(this), 500));
@@ -112,7 +112,7 @@ const AdminPage = {
         const tbody = $('#usersTableBody');
         
         if (users.length === 0) {
-            tbody.html('<tr><td colspan="7" class="text-center text-muted">暂无用户数据</td></tr>');
+            tbody.html('<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>');
             return;
         }
         
@@ -120,7 +120,6 @@ const AdminPage = {
             <tr>
                 <td>${user.id}</td>
                 <td>${user.username}</td>
-                <td>${user.email || '-'}</td>
                 <td>
                     <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
                         ${user.role === 'admin' ? '管理员' : '普通用户'}
@@ -155,6 +154,14 @@ const AdminPage = {
     },
 
     /**
+     * 显示修改密码模态框
+     */
+    showChangePasswordModal: function() {
+        $('#adminChangePasswordModal').modal('show');
+        $('#adminChangePasswordForm')[0].reset();
+    },
+
+    /**
      * 处理添加用户表单提交
      * @param {Event} e - 事件对象
      */
@@ -173,18 +180,12 @@ const AdminPage = {
         const data = {
             username: formData.get('username'),
             password: formData.get('password'),
-            email: formData.get('email'),
             role: formData.get('role')
         };
 
         // 验证输入
-        if (!data.username || !data.password || !data.email) {
+        if (!data.username || !data.password) {
             Utils.showAlert('请填写完整信息', 'warning');
-            return;
-        }
-
-        if (!Utils.isValidEmail(data.email)) {
-            Utils.showAlert('请输入正确的邮箱地址', 'warning');
             return;
         }
 
@@ -269,12 +270,47 @@ const AdminPage = {
         console.log('加载系统设置');
     },
 
+
     /**
-     * 处理设置保存
+     * 处理管理员修改密码
      */
-    handleSettings: function(e) {
+    handleChangePassword: async function(e) {
         e.preventDefault();
-        Utils.showAlert('设置保存功能开发中...', 'info');
+
+        const form = $('#adminChangePasswordForm');
+        const formData = new FormData(form[0]);
+
+        const data = {
+            old_password: formData.get('old_password'),
+            new_password: formData.get('new_password')
+        };
+
+        const confirmPassword = $('#adminConfirmPassword').val();
+        if (data.new_password !== confirmPassword) {
+            Utils.showAlert('两次输入的新密码不一致', 'warning');
+            return;
+        }
+
+        const submitSelector = '#adminChangePasswordForm button[type="submit"]';
+
+        try {
+            Utils.showLoading(true, submitSelector);
+
+            const response = await API.post('/admin/change_password', data);
+
+            if (response.code === 0) {
+                Utils.showAlert('密码修改成功', 'success');
+                form[0].reset();
+                $('#adminChangePasswordModal').modal('hide');
+            } else {
+                Utils.showAlert('密码修改失败: ' + response.message, 'danger');
+            }
+        } catch (error) {
+            console.error('管理员修改密码失败:', error);
+            Utils.showAlert('密码修改失败', 'danger');
+        } finally {
+            Utils.showLoading(false, submitSelector);
+        }
     },
 
     /**
@@ -282,10 +318,9 @@ const AdminPage = {
      */
     logout: function() {
         if (confirm('确定要退出登录吗？')) {
-            // 清除token
-            Utils.clearToken();
-            // 跳转到登录页
-            window.location.href = '/login';
+            API.post('/logout', {}).finally(() => {
+                window.location.href = '/login';
+            });
         }
     },
 

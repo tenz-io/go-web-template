@@ -10,6 +10,7 @@ import (
 
 	"go-web-template/internal/config"
 	"go-web-template/internal/middleware"
+	"go-web-template/internal/service"
 )
 
 type WebServer struct {
@@ -20,9 +21,10 @@ type WebServer struct {
 	auth       *AuthServer
 	user       *UserServer
 	jwtManager *middleware.JWTManager
+	tokenSvc   service.Token
 }
 
-func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminServer, authServer *AuthServer, userServer *UserServer, jwtManager *middleware.JWTManager) *WebServer {
+func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminServer, authServer *AuthServer, userServer *UserServer, jwtManager *middleware.JWTManager, tokenSvc service.Token) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -37,6 +39,7 @@ func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminSe
 		auth:       authServer,
 		user:       userServer,
 		jwtManager: jwtManager,
+		tokenSvc:   tokenSvc,
 	}
 
 	return ws
@@ -68,7 +71,7 @@ func (ws *WebServer) registerRoutes() {
 		Type:     middleware.AuthTypeBearer,
 		Required: true,
 		Role:     constant.RoleUser,
-	}, ws.jwtManager))
+	}, ws.jwtManager, ws.tokenSvc))
 	ws.api.RegisterRoutes(apiGroup)
 
 	// 注册管理路由（需要管理员权限）
@@ -77,7 +80,7 @@ func (ws *WebServer) registerRoutes() {
 		Type:     middleware.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleAdmin,
-	}, ws.jwtManager))
+	}, ws.jwtManager, ws.tokenSvc))
 	ws.admin.RegisterRoutes(adminGroup)
 
 	// 注册用户路由（需要用户权限）
@@ -86,7 +89,7 @@ func (ws *WebServer) registerRoutes() {
 		Type:     middleware.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleUser,
-	}, ws.jwtManager))
+	}, ws.jwtManager, ws.tokenSvc))
 	ws.user.RegisterRoutes(userGroup)
 
 	// 页面路由（最后注册，避免被API路由覆盖）
