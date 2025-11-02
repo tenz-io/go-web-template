@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go-web-template/internal/util"
 
@@ -25,8 +26,8 @@ func (r *user) GetByName(ctx context.Context, name string) (*model.User, error) 
 	var userModel model.User
 	err := r.db.WithContext(ctx).Where("username = ?", name).First(&userModel).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, err
 	}
@@ -38,8 +39,8 @@ func (r *user) GetByID(ctx context.Context, id int64) (*model.User, error) {
 	var userModel model.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&userModel).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("user not found")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, err
 	}

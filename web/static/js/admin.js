@@ -89,7 +89,12 @@ const AdminPage = {
             const response = await API.get('/admin/users');
             
             if (response.code === 0) {
-                this.renderUsersTable(response.data || []);
+                const users = response.data && Array.isArray(response.data.users) ? response.data.users : [];
+                this.renderUsersTable(users);
+
+                if (response.data && typeof response.data.total === 'number') {
+                    $('#totalUsers').text(response.data.total);
+                }
             } else {
                 Utils.showAlert('加载用户列表失败: ' + response.message, 'danger');
             }
@@ -107,7 +112,7 @@ const AdminPage = {
         const tbody = $('#usersTableBody');
         
         if (users.length === 0) {
-            tbody.html('<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>');
+            tbody.html('<tr><td colspan="7" class="text-center text-muted">暂无用户数据</td></tr>');
             return;
         }
         
@@ -115,15 +120,16 @@ const AdminPage = {
             <tr>
                 <td>${user.id}</td>
                 <td>${user.username}</td>
+                <td>${user.email || '-'}</td>
                 <td>
                     <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
                         ${user.role === 'admin' ? '管理员' : '普通用户'}
                     </span>
                 </td>
-                <td>${Utils.formatDate(user.created_at)}</td>
                 <td>
                     <span class="badge bg-success">活跃</span>
                 </td>
+                <td>${Utils.formatDate(user.created_at)}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-primary" onclick="AdminPage.editUser(${user.id})">
@@ -149,6 +155,15 @@ const AdminPage = {
     },
 
     /**
+     * 处理添加用户表单提交
+     * @param {Event} e - 事件对象
+     */
+    handleAddUser: function(e) {
+        e.preventDefault();
+        this.addUser();
+    },
+
+    /**
      * 添加用户
      */
     addUser: async function() {
@@ -158,17 +173,25 @@ const AdminPage = {
         const data = {
             username: formData.get('username'),
             password: formData.get('password'),
+            email: formData.get('email'),
             role: formData.get('role')
         };
 
         // 验证输入
-        if (!data.username || !data.password) {
+        if (!data.username || !data.password || !data.email) {
             Utils.showAlert('请填写完整信息', 'warning');
             return;
         }
 
+        if (!Utils.isValidEmail(data.email)) {
+            Utils.showAlert('请输入正确的邮箱地址', 'warning');
+            return;
+        }
+
+        const submitSelector = '#addUserForm button[type="submit"]';
+
         try {
-            Utils.showLoading(true);
+            Utils.showLoading(true, submitSelector);
             
             const response = await API.post('/admin/add_user', data);
             
@@ -183,7 +206,7 @@ const AdminPage = {
             console.error('添加用户失败:', error);
             Utils.showAlert('添加用户失败', 'danger');
         } finally {
-            Utils.showLoading(false);
+            Utils.showLoading(false, submitSelector);
         }
     },
 

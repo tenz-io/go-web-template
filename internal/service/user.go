@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"go-web-template/internal/repository/dao"
 	"go-web-template/internal/util"
@@ -11,6 +12,8 @@ import (
 	"go-web-template/internal/config"
 	"go-web-template/internal/constant"
 	"go-web-template/internal/model"
+
+	"gorm.io/gorm"
 )
 
 // User 用户服务接口
@@ -83,6 +86,10 @@ func (u *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (*m
 	_, err := u.userRepo.GetByName(ctx, req.Username)
 	if err == nil {
 		return nil, fmt.Errorf("username already exists")
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		le.WithError(err).Error("failed to check user existence")
+		return nil, err
 	}
 
 	// 生成盐值
