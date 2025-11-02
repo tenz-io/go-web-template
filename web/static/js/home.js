@@ -357,7 +357,7 @@ const HomePage = {
         try {
             Utils.showLoading(true);
             
-            const response = await API.post('/user/api_tokens', data);
+            const response = await API.post('/user/generate_token', data);
             
             if (response.code === 0) {
                 Utils.showAlert('Token生成成功', 'success');
@@ -443,19 +443,7 @@ const HomePage = {
             return;
         }
 
-        try {
-            const response = await API.delete(`/user/api_tokens/${tokenId}`);
-            
-            if (response.code === 0) {
-                Utils.showAlert('Token删除成功', 'success');
-                this.loadTokens();
-            } else {
-                Utils.showAlert('删除Token失败: ' + response.message, 'danger');
-            }
-        } catch (error) {
-            console.error('删除Token失败:', error);
-            Utils.showAlert('删除Token失败', 'danger');
-        }
+        Utils.showAlert('当前版本仅支持临时 Token，无需删除。', 'info');
     },
 
     /**
@@ -519,7 +507,9 @@ const HomePage = {
     logout: function() {
         if (confirm('确定要退出登录吗？')) {
             Utils.clearToken();
-            window.location.href = '/';
+            API.post('/logout', {}).finally(() => {
+                window.location.href = '/login';
+            });
         }
     },
 

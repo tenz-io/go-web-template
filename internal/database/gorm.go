@@ -88,7 +88,7 @@ func (db *DB) Close() error {
 // initTables 初始化数据库表
 func (db *DB) initTables() error {
 	// 自动迁移用户表
-	if err := db.conn.AutoMigrate(&model.User{}, &model.APIToken{}); err != nil {
+	if err := db.conn.AutoMigrate(&model.User{}); err != nil {
 		return err
 	}
 
@@ -98,6 +98,14 @@ func (db *DB) initTables() error {
 		if err := migrator.DropColumn(&model.User{}, "email"); err != nil {
 			return err
 		}
+	}
+
+	// 移除已弃用的 api_tokens 表（如果存在）
+	if migrator.HasTable("api_tokens") {
+		_ = migrator.DropTable("api_tokens")
+	}
+	if migrator.HasTable("a_p_i_tokens") {
+		_ = migrator.DropTable("a_p_i_tokens")
 	}
 
 	return nil

@@ -26,17 +26,9 @@ func NewUserRepository(db *database.DB) dao.User {
 	return dao.NewUser(db.GetConn())
 }
 
-func NewTokenRepository(db *database.DB) dao.APIToken {
-	return dao.NewAPIToken(db.GetConn())
-}
-
 // 服务层提供者
 func NewUserService(cfg *config.Config, userRepo dao.User) service.User {
 	return service.NewUser(cfg, userRepo)
-}
-
-func NewTokenService(tokenRepo dao.APIToken) service.Token {
-	return service.NewToken(tokenRepo)
 }
 
 // 控制器层提供者
@@ -52,12 +44,12 @@ func NewAuthController(userRepo dao.User, jwtManager *middleware.JWTManager) *co
 	return controller.NewAuthServer(userRepo, jwtManager)
 }
 
-func NewUserController(userService service.User, tokenService service.Token, jwtManager *middleware.JWTManager) *controller.UserServer {
-	return controller.NewUserServer(userService, tokenService, jwtManager)
+func NewUserController(userService service.User, jwtManager *middleware.JWTManager) *controller.UserServer {
+	return controller.NewUserServer(userService, jwtManager)
 }
 
-func NewWebController(cfg *config.Config, apiController *controller.ApiServer, adminController *controller.AdminServer, authController *controller.AuthServer, userController *controller.UserServer, jwtManager *middleware.JWTManager, tokenService service.Token) *controller.WebServer {
-	return controller.NewWebServer(cfg, apiController, adminController, authController, userController, jwtManager, tokenService)
+func NewWebController(cfg *config.Config, apiController *controller.ApiServer, adminController *controller.AdminServer, authController *controller.AuthServer, userController *controller.UserServer, jwtManager *middleware.JWTManager) *controller.WebServer {
+	return controller.NewWebServer(cfg, apiController, adminController, authController, userController, jwtManager)
 }
 
 // 主控制器提供者

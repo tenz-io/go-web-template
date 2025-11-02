@@ -7,8 +7,8 @@ type UserChangePasswordResponse struct {
 	BaseResponse
 }
 
-// UserCreateTokenResponse 用户生成API token响应
-type UserCreateTokenResponse struct {
+// UserGenerateTokenResponse 用户生成API token响应
+type UserGenerateTokenResponse struct {
 	BaseResponse
 	Token string `json:"token,omitempty"`
 }

@@ -1,10 +1,7 @@
 package controller
 
 import (
-	"errors"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -20,26 +17,24 @@ import (
 
 type UserServer struct {
 	userService service.User
-	tokenSvc    service.Token
 	jwtManager  *middleware.JWTManager
 }
 
-func NewUserServer(userService service.User, tokenService service.Token, jwtManager *middleware.JWTManager) *UserServer {
+func NewUserServer(userService service.User, jwtManager *middleware.JWTManager) *UserServer {
 	return &UserServer{
 		userService: userService,
-		tokenSvc:    tokenService,
 		jwtManager:  jwtManager,
 	}
 }
 
-// 注册用户路由
+// RegisterRoutes 注册用户侧路由
 func (u *UserServer) RegisterRoutes(r *gin.RouterGroup) {
-	// 用户页面路由
+	// 页面
 	r.GET("/home", u.home)
+
+	// API
 	r.POST("/change_password", u.changePassword)
-	r.GET("/api_tokens", u.listTokens)
-	r.POST("/api_tokens", u.createToken)
-	r.DELETE("/api_tokens/:id", u.deleteToken)
+	r.POST("/generate_token", u.generateToken)
 }
 
 func (u *UserServer) home(c *gin.Context) {
@@ -122,9 +117,9 @@ func (u *UserServer) changePassword(c *gin.Context) {
 	})
 }
 
-// createToken 用户生成 API token
-func (u *UserServer) createToken(c *gin.Context) {
-	var req request.UserCreateTokenRequest
+// generateToken 用户生成 API Token（JWT 格式）
+func (u *UserServer) generateToken(c *gin.Context) {
+	var req request.UserGenerateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
@@ -136,9 +131,8 @@ func (u *UserServer) createToken(c *gin.Context) {
 	}
 
 	le := logger.FromContext(c.Request.Context())
-	le.Debug("user create api token called")
+	le.Debug("user generate api token")
 
-	// 从 JWT token 中获取用户ID和角色
 	userID, userRole, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
 		le.WithError(err).Error("failed to get user info from context")
@@ -151,28 +145,22 @@ func (u *UserServer) createToken(c *gin.Context) {
 		return
 	}
 
-	name := strings.TrimSpace(req.Name)
-	if name == "" {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "Token 名称不能为空",
-			},
-		})
-		return
-	}
-
 	expireSeconds := req.Expire
-	if expireSeconds > int((24 * time.Hour * 30).Seconds()) {
-		expireSeconds = int((24 * time.Hour * 30).Seconds())
+	if expireSeconds <= 0 {
+		expireSeconds = 3600
+	}
+	if expireSeconds > int((24 * time.Hour * 7).Seconds()) {
+		expireSeconds = int((24 * time.Hour * 7).Seconds())
+	}
+	if expireSeconds < 60 {
+		expireSeconds = 60
 	}
 
 	expDuration := time.Duration(expireSeconds) * time.Second
 
-	// 生成 JWT token
 	token, err := u.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
 	if err != nil {
-		le.Error("failed to generate token")
+		le.WithError(err).Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
 				Code:    500,
@@ -182,127 +170,12 @@ func (u *UserServer) createToken(c *gin.Context) {
 		return
 	}
 
-	expiresAt := time.Now().Add(expDuration)
-	if _, err := u.tokenSvc.CreateToken(c.Request.Context(), userID, name, token, &expiresAt); err != nil {
-		le.WithError(err).Error("failed to persist api token")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "保存令牌失败",
-			},
-		})
-		return
-	}
-
 	le.Info("user token generated successfully")
-	c.JSON(http.StatusOK, response.UserCreateTokenResponse{
+	c.JSON(http.StatusOK, response.UserGenerateTokenResponse{
 		BaseResponse: response.BaseResponse{
 			Code:    0,
 			Message: "令牌生成成功",
 		},
 		Token: token,
-	})
-}
-
-func (u *UserServer) listTokens(c *gin.Context) {
-	userID, _, err := middleware.GetUserInfoFromContext(c)
-	if err != nil {
-		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
-		return
-	}
-
-	tokens, err := u.tokenSvc.ListTokens(c.Request.Context(), userID)
-	if err != nil {
-		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to list tokens")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "获取 Token 列表失败",
-			},
-		})
-		return
-	}
-
-	var items []gin.H
-	for _, token := range tokens {
-		item := gin.H{
-			"id":         token.ID,
-			"name":       token.Name,
-			"created_at": token.CreatedAt,
-		}
-		if token.ExpiresAt != nil {
-			item["expires_at"] = token.ExpiresAt
-		}
-		items = append(items, item)
-	}
-
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "获取 Token 列表成功",
-		},
-		Data: gin.H{
-			"tokens": items,
-		},
-	})
-}
-
-func (u *UserServer) deleteToken(c *gin.Context) {
-	userID, _, err := middleware.GetUserInfoFromContext(c)
-	if err != nil {
-		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
-		return
-	}
-
-	tokenIDStr := c.Param("id")
-	tokenID, err := strconv.ParseInt(tokenIDStr, 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "无效的 Token ID",
-			},
-		})
-		return
-	}
-
-	if err := u.tokenSvc.DeleteToken(c.Request.Context(), userID, tokenID); err != nil {
-		if errors.Is(err, service.ErrTokenNotFound) {
-			c.JSON(http.StatusNotFound, response.ErrorResponse{
-				BaseResponse: response.BaseResponse{
-					Code:    404,
-					Message: "Token 不存在",
-				},
-			})
-			return
-		}
-
-		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to delete token")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "删除 Token 失败",
-			},
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "Token 已删除",
-		},
 	})
 }

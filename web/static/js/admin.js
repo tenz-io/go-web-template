@@ -318,6 +318,7 @@ const AdminPage = {
      */
     logout: function() {
         if (confirm('确定要退出登录吗？')) {
+            Utils.clearToken();
             API.post('/logout', {}).finally(() => {
                 window.location.href = '/login';
             });

@@ -23,10 +23,8 @@ func InitializeControllers(cfg *config.Config) (*Controllers, error) {
 	serviceUser := NewUserService(cfg, user)
 	adminServer := NewAdminController(serviceUser, jwtManager)
 	authServer := NewAuthController(user, jwtManager)
-	apiToken := NewTokenRepository(db)
-	token := NewTokenService(apiToken)
-	userServer := NewUserController(serviceUser, token, jwtManager)
-	webServer := NewWebController(cfg, apiServer, adminServer, authServer, userServer, jwtManager, token)
+	userServer := NewUserController(serviceUser, jwtManager)
+	webServer := NewWebController(cfg, apiServer, adminServer, authServer, userServer, jwtManager)
 	controllers := NewControllers(webServer)
 	return controllers, nil
 }
