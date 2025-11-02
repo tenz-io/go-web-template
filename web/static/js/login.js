@@ -34,10 +34,7 @@ const LoginPage = {
      * 检查认证状态
      */
     checkAuth: function () {
-        // 如果已经有token，直接跳转
-        if (Utils.getToken()) {
-            this.redirectToHome();
-        }
+
     },
 
     /**

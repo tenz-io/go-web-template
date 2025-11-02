@@ -73,7 +73,8 @@ const Utils = {
      * 获取Token
      */
     getToken: function() {
-        return localStorage.getItem(AppConfig.tokenKey) || '';
+        const token = localStorage.getItem(AppConfig.tokenKey);
+        return token ? token.trim() : '';
     },
 
     /**
