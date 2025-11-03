@@ -85,15 +85,8 @@ create_env_file() {
         print_info "创建环境配置文件..."
         cat > .env << EOF
 # 应用配置
-APP_SECRET=your-secret-key-$(date +%s)
-APP_ADMIN_USER=admin
-APP_ADMIN_PASS=admin123
+JWT_SECRET=abc123
 
-# 数据库配置
-DB_PASS=your-db-password
-
-# JWT 配置
-JWT_SECRET=your-jwt-secret-$(date +%s)
 EOF
         print_success "环境配置文件已创建: .env"
         print_warning "请编辑 .env 文件，设置正确的配置值"

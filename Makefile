@@ -145,41 +145,6 @@ clean: ## 清理构建文件
 	@rm -f coverage.out coverage.html
 	@echo "$(GREEN)[SUCCESS]$(NC) 清理完成"
 
-# Docker 构建
-.PHONY: docker-build
-docker-build: ## 构建 Docker 镜像
-	@echo "$(BLUE)[INFO]$(NC) 构建 Docker 镜像..."
-	@docker build --build-arg SKAFFOLD_GO_GCFLAGS="-N -l" -t $(REPO_NAME) .
-	@echo "$(GREEN)[SUCCESS]$(NC) Docker 镜像构建完成: $(REPO_NAME)"
-
-# Docker 运行
-.PHONY: docker-run
-docker-run: docker-build ## 构建并运行 Docker 容器
-	@echo "$(BLUE)[INFO]$(NC) 启动 Docker 容器..."
-	@docker rm -f $(REPO_NAME) || true
-	@docker run --name $(REPO_NAME) -p $(PORT):$(PORT) $(REPO_NAME)
-	@echo "$(GREEN)[SUCCESS]$(NC) Docker 容器启动完成"
-
-# 创建环境配置
-.PHONY: env
-env: ## 创建环境配置文件
-	@echo "$(BLUE)[INFO]$(NC) 创建环境配置文件..."
-	@if [ ! -f .env ]; then \
-		echo "# 应用配置" > .env; \
-		echo "APP_SECRET=your-secret-key-$$(date +%s)" >> .env; \
-		echo "APP_ADMIN_USER=admin" >> .env; \
-		echo "APP_ADMIN_PASS=admin123" >> .env; \
-		echo "" >> .env; \
-		echo "# 数据库配置" >> .env; \
-		echo "DB_PASS=your-db-password" >> .env; \
-		echo "" >> .env; \
-		echo "# JWT 配置" >> .env; \
-		echo "JWT_SECRET=your-jwt-secret-$$(date +%s)" >> .env; \
-		echo "$(GREEN)[SUCCESS]$(NC) 环境配置文件已创建: .env"; \
-	else \
-		echo "$(YELLOW)[INFO]$(NC) 环境配置文件已存在"; \
-	fi
-
 # 显示项目信息
 .PHONY: info
 info: ## 显示项目信息
@@ -191,12 +156,11 @@ info: ## 显示项目信息
 	@echo ""
 	@echo "$(BLUE)[INFO]$(NC) 服务地址:"
 	@echo "  主页: http://localhost:$(PORT)/"
-	@echo "  管理后台: http://localhost:$(PORT)/admin/"
 	@echo "  API 接口: http://localhost:$(PORT)/api/"
 	@echo ""
 	@echo "$(BLUE)[INFO]$(NC) 默认管理员账号:"
 	@echo "  用户名: admin"
-	@echo "  密码: admin123"
+	@echo "  密码: admin"
 
 # 完整构建流程
 .PHONY: all
@@ -209,7 +173,7 @@ ensure-cache:
 
 # 开发环境初始化
 .PHONY: init
-init: install-tools deps generate wire env ## 初始化开发环境
+init: install-tools deps generate wire ## 初始化开发环境
 	@echo "$(GREEN)[SUCCESS]$(NC) 开发环境初始化完成"
 
 # 默认目标
