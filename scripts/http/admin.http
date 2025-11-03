@@ -1,6 +1,6 @@
 
 ### login
-POST localhost:8090/admin/login
+POST localhost:8090/login
 Content-Type: application/json
 
 {

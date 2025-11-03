@@ -30,7 +30,6 @@ func main() {
 			cmd.WithYamlConfig(),
 			cmd.WithUpdateConfigByEnv(),
 			cmd.WithLogger(true),
-			cmd.WithAdminHTTPServer(),
 			updateConfig(),
 			server.Init(),
 		},

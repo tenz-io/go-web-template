@@ -1,71 +1,192 @@
-repo_name := go-web-template
+# Go Web 模板项目 Makefile
+# 作者: Go Web Template Team
+# 版本: 2.0.0
 
-TOOL_PATH = tool
-TOOL_FILES := $(shell cd $(TOOL_PATH); find . -maxdepth 1 -type d|grep -v '/common')
-TOOL_TAGET := $(basename $(patsubst ./%,%,$(TOOL_FILES)))
-TOOL_BIN_FILES := $(basename $(patsubst ./%,$(bin_dir)/%,$(TOOL_FILES)))
+# 项目配置
+REPO_NAME := go-web-template
+BIN_DIR := bin
+LOG_DIR := log
+CONFIG_FILE := config/app.yaml
+PORT := 8090
+TOOL_DIR := tool
+TOOL_TARGETS := $(notdir $(wildcard $(TOOL_DIR)/*))
 
-go-mod-init:
-	go mod init $(repo_name)
+GOCACHE := $(CURDIR)/.cache/go-build
+export GOCACHE
 
+# 颜色定义
+GREEN := \033[0;32m
+YELLOW := \033[1;33m
+BLUE := \033[0;34m
+RED := \033[0;31m
+NC := \033[0m # No Color
+
+# 帮助信息
+.PHONY: help
+help: ## 显示帮助信息
+	@echo "$(BLUE)Go Web 模板项目构建工具$(NC)"
+	@echo "=========================="
+	@echo ""
+	@echo "$(BLUE)可用命令:$(NC)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(BLUE)%-15s$(NC) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo ""
+	@echo "$(BLUE)示例:$(NC)"
+	@echo "  make help          # 显示此帮助信息"
+	@echo "  make quick-start   # 快速启动（推荐）"
+	@echo "  make dev           # 开发模式启动"
+	@echo "  make build         # 构建项目"
+	@echo "  make test          # 运行测试"
+
+# 快速启动（推荐）
+.PHONY: quick-start
+quick-start: ## 快速启动项目（推荐）
+	@echo "$(GREEN)[INFO]$(NC) 启动快速启动脚本..."
+	@chmod +x scripts/quick-start.sh
+	@./scripts/quick-start.sh
+
+# 开发模式
+.PHONY: dev
+dev: generate build ## 开发模式启动
+	@echo "$(GREEN)[INFO]$(NC) 启动开发模式..."
+	@echo "$(YELLOW)[INFO]$(NC) 服务地址: http://localhost:$(PORT)"
+	@echo "$(YELLOW)[INFO]$(NC) 管理后台: http://localhost:$(PORT)/admin/"
+	@echo "$(YELLOW)[INFO]$(NC) 按 Ctrl+C 停止服务"
+	@./$(BIN_DIR)/$(REPO_NAME) -c $(CONFIG_FILE) -p $(PORT) -v
+
+# 环境检查
+.PHONY: check
+check: ## 检查开发环境
+	@echo "$(BLUE)[INFO]$(NC) 检查 Go 版本..."
+	@go version
+	@echo "$(BLUE)[INFO]$(NC) 检查依赖工具..."
+	@which wire || echo "$(YELLOW)[WARNING]$(NC) wire 未安装，运行: go install github.com/google/wire/cmd/wire@latest"
+	@which go-enum || echo "$(YELLOW)[WARNING]$(NC) go-enum 未安装，运行: go install github.com/abice/go-enum@latest"
+	@echo "$(GREEN)[SUCCESS]$(NC) 环境检查完成"
+
+# 安装依赖
+.PHONY: deps
+deps: ## 安装项目依赖
+	@echo "$(BLUE)[INFO]$(NC) 安装项目依赖..."
+	@go mod tidy -v
+	@echo "$(GREEN)[SUCCESS]$(NC) 依赖安装完成"
+
+# 安装开发工具
+.PHONY: install-tools
+install-tools: ## 安装开发工具
+	@echo "$(BLUE)[INFO]$(NC) 安装开发工具..."
+	@go install github.com/google/wire/cmd/wire@latest
+	@go install github.com/abice/go-enum@latest
+	@echo "$(GREEN)[SUCCESS]$(NC) 开发工具安装完成"
+
+# 生成代码
 .PHONY: generate
-generate: ## Generate
-	go generate ./internal/constant/... ./internal/repository/... ./internal/service/...
+generate: ensure-cache ## 生成所有代码
+	@echo "$(BLUE)[INFO]$(NC) 生成枚举代码..."
+	@go generate ./internal/constant/... ./internal/repository/... ./internal/service/...
+	@echo "$(GREEN)[SUCCESS]$(NC) 代码生成完成"
 
+# 生成 wire 代码
 .PHONY: wire
-wire: ## Wire generate
-	wire gen $(repo_name)/internal/setup/...
+wire: ensure-cache ## 生成依赖注入代码
+	@echo "$(BLUE)[INFO]$(NC) 生成 wire 代码..."
+	@wire gen $(REPO_NAME)/internal/setup/...
+	@echo "$(GREEN)[SUCCESS]$(NC) Wire 代码生成完成"
 
-.PHONY: gci
-gci:
-	gci write -s standard -s default -s "prefix(github.com)" -s "prefix(go-web-template)" --skip-generated *
+# 代码格式化
+.PHONY: fmt
+fmt: ## 格式化代码
+	@echo "$(BLUE)[INFO]$(NC) 格式化代码..."
+	@go fmt ./...
+	@echo "$(GREEN)[SUCCESS]$(NC) 代码格式化完成"
 
+# 代码检查
+.PHONY: lint
+lint: ## 运行代码检查
+	@echo "$(BLUE)[INFO]$(NC) 运行代码检查..."
+	@go vet ./...
+	@echo "$(GREEN)[SUCCESS]$(NC) 代码检查完成"
 
-.PHONY: proto-compile
-proto-compile:
-	@echo "=== generate gin api"
-	protoc -I ./api \
-	--openapiv2_out ./api --openapiv2_opt logtostderr=true \
-	--openapiv2_opt json_names_for_fields=false \
-	--go_out ./api --go_opt=paths=source_relative \
-	--go-gin_out ./api --go-gin_opt=paths=source_relative \
-	./api/http/app/*.proto
-
-	@echo "=== generate tag for gin api"
-	protoc-go-inject-tag -input=./api/http/app/*.pb.go
-
+# 构建项目
 .PHONY: build
-build: wire ## Build
-	mkdir -p bin
-	go build -mod=readonly -v -o bin/$(repo_name) ./cmd
+build: wire ## 构建项目
+	@echo "$(BLUE)[INFO]$(NC) 构建项目..."
+	@mkdir -p $(BIN_DIR)
+	@go build -mod=readonly -v -o $(BIN_DIR)/$(REPO_NAME) ./cmd
+	@echo "$(GREEN)[SUCCESS]$(NC) 项目构建完成: $(BIN_DIR)/$(REPO_NAME)"
 
-.PHONY: dep
-dep:
-	go mod tidy -v
+# 运行项目
+.PHONY: run
+run: build ## 构建并运行项目
+	@echo "$(BLUE)[INFO]$(NC) 启动服务..."
+	@echo "$(YELLOW)[INFO]$(NC) 服务地址: http://localhost:$(PORT)"
+	@echo "$(YELLOW)[INFO]$(NC) 管理后台: http://localhost:$(PORT)/admin/"
+	@echo "$(YELLOW)[INFO]$(NC) 按 Ctrl+C 停止服务"
+	@./$(BIN_DIR)/$(REPO_NAME) -c $(CONFIG_FILE) -p $(PORT) -v
 
-
+# 测试
 .PHONY: test
-test:
-	go test -v ./... -cover
+test: ## 运行测试
+	@echo "$(BLUE)[INFO]$(NC) 运行测试..."
+	@go test -v ./... -cover
+	@echo "$(GREEN)[SUCCESS]$(NC) 测试完成"
 
-.PHONY run:
-run: build #
-	#go run cmd/main.go
-	./bin/$(repo_name) -c config/app.yaml -p 8090 -v
+# 测试覆盖率
+.PHONY: test-coverage
+test-coverage: ## 运行测试并生成覆盖率报告
+	@echo "$(BLUE)[INFO]$(NC) 运行测试覆盖率分析..."
+	@go test -v ./... -cover -coverprofile=coverage.out
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "$(GREEN)[SUCCESS]$(NC) 覆盖率报告已生成: coverage.html"
 
-$(TOOL_TAGET):
+$(TOOL_TARGETS):
 	@echo "=== build tool $@"
-	scripts/build-tool.sh $@
+	@mkdir -p $(BIN_DIR)
+	@scripts/build-tool.sh $@
 
 .PHONY: build-tools
-build-tools: $(TOOL_TAGET)
+build-tools: $(TOOL_TARGETS)
 
-.PHONY docker-build:
-docker-build:
-	docker build --build-arg SKAFFOLD_GO_GCFLAGS="-N -l" -t $(repo_name) .
+# 清理
+.PHONY: clean
+clean: ## 清理构建文件
+	@echo "$(BLUE)[INFO]$(NC) 清理构建文件..."
+	@rm -rf $(BIN_DIR)
+	@rm -rf $(LOG_DIR)
+	@rm -f coverage.out coverage.html
+	@echo "$(GREEN)[SUCCESS]$(NC) 清理完成"
 
-.PHONY docker-run:
-docker-run: docker-build
-	docker rm -f $(repo_name) || true
-	docker run --name $(repo_name) -p 8080:8080 -p 8085:8085 $(repo_name)
+# 显示项目信息
+.PHONY: info
+info: ## 显示项目信息
+	@echo "$(BLUE)[INFO]$(NC) 项目信息:"
+	@echo "  项目名称: $(REPO_NAME)"
+	@echo "  配置文件: $(CONFIG_FILE)"
+	@echo "  默认端口: $(PORT)"
+	@echo "  二进制文件: $(BIN_DIR)/$(REPO_NAME)"
+	@echo ""
+	@echo "$(BLUE)[INFO]$(NC) 服务地址:"
+	@echo "  主页: http://localhost:$(PORT)/"
+	@echo "  API 接口: http://localhost:$(PORT)/api/"
+	@echo ""
+	@echo "$(BLUE)[INFO]$(NC) 默认管理员账号:"
+	@echo "  用户名: admin"
+	@echo "  密码: admin"
 
+
+
+# 完整构建流程
+.PHONY: all
+all: clean deps generate build build-tools test ## 完整构建流程
+
+.PHONY: ensure-cache
+ensure-cache:
+	@mkdir -p $(GOCACHE)
+	@echo "$(GREEN)[SUCCESS]$(NC) 完整构建流程完成"
+
+# 开发环境初始化
+.PHONY: init
+init: install-tools deps generate wire ## 初始化开发环境
+	@echo "$(GREEN)[SUCCESS]$(NC) 开发环境初始化完成"
+
+# 默认目标
+.DEFAULT_GOAL := help

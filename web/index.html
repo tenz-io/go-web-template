@@ -1,13 +1,219 @@
-<!-- index.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    <title>Homepage</title>
+    <title>{{.name}} - 欢迎</title>
+    <!-- Bootstrap CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <link rel="stylesheet" href="/static/css/common.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .hero-section {
+            padding: 100px 0;
+            color: white;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        .hero-description {
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .btn-login {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+        }
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        .features-section {
+            background: white;
+            padding: 80px 0;
+        }
+        .feature-card {
+            text-align: center;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .feature-description {
+            color: #666;
+            line-height: 1.6;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+        .navbar-nav .nav-link:hover {
+            color: white !important;
+        }
+    </style>
 </head>
 <body>
-<h1>Welcome to {{.name}}!</h1>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shield-alt"></i> {{.name}}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">登录</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main>
+        <!-- 英雄区域 -->
+        <section class="hero-section">
+            <div class="container">
+                <h1 class="hero-title">
+                    <i class="fas fa-rocket"></i> 欢迎使用 {{.name}}
+                </h1>
+                <p class="hero-subtitle">现代化的Web应用模板</p>
+                <p class="hero-description">
+                    基于Go语言和Gin框架构建的高性能Web应用模板，提供完整的用户认证、权限管理和现代化的用户界面。
+                    支持管理员和普通用户两种角色，满足不同场景的业务需求。
+                </p>
+                <a href="/login" class="btn-login">
+                    <i class="fas fa-sign-in-alt"></i> 立即登录
+                </a>
+            </div>
+        </section>
+
+        <!-- 功能特性区域 -->
+        <section class="features-section">
+            <div class="container">
+                <div class="row text-center mb-5">
+                    <div class="col-12">
+                        <h2 class="display-4 fw-bold text-primary mb-3">核心功能</h2>
+                        <p class="lead text-muted">为您提供完整的Web应用解决方案</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <h3 class="feature-title">用户认证</h3>
+                            <p class="feature-description">
+                                基于JWT的安全认证系统，支持用户登录、登出和权限验证，确保应用安全可靠。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                            <h3 class="feature-title">角色管理</h3>
+                            <p class="feature-description">
+                                支持管理员和普通用户两种角色，不同角色拥有不同的功能权限和页面访问权限。
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-mobile-alt"></i>
+                            </div>
+                            <h3 class="feature-title">响应式设计</h3>
+                            <p class="feature-description">
+                                采用Bootstrap框架，完美适配各种设备屏幕，提供优秀的用户体验。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white text-center py-4">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 {{.name}}. 基于Go语言和Gin框架构建.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script src="/static/js/common.js"></script>
 </body>
 </html>

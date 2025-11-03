@@ -2,125 +2,111 @@ package controller
 
 import (
 	"fmt"
-	"log"
+	"go-web-template/internal/constant"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/tenz-io/gokit/ginext"
+	"github.com/tenz-io/gokit/logger"
 
-	pbapp "go-web-template/api/http/app"
 	"go-web-template/internal/config"
+	"go-web-template/internal/middleware"
 )
 
 type WebServer struct {
-	engine *gin.Engine
-	cfg    *config.Config
-	api    *ApiServer
-	admin  *AdminServer
+	engine     *gin.Engine
+	cfg        *config.Config
+	api        *ApiController
+	admin      *AdminController
+	auth       *AuthController
+	user       *UserController
+	jwtManager *middleware.JWTManager
 }
 
-func NewWebServer(
-	cfg *config.Config,
-	apiServer *ApiServer,
-	adminServer *AdminServer,
-) *WebServer {
+func NewWebServer(cfg *config.Config, apiServer *ApiController, adminServer *AdminController, authServer *AuthController, userServer *UserController, jwtManager *middleware.JWTManager) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	ws := &WebServer{
-		engine: gin.New(),
-		cfg:    cfg,
-		api:    apiServer,
-		admin:  adminServer,
+		engine:     gin.New(),
+		cfg:        cfg,
+		api:        apiServer,
+		admin:      adminServer,
+		auth:       authServer,
+		user:       userServer,
+		jwtManager: jwtManager,
 	}
 
 	return ws
 }
 
 func (ws *WebServer) Init() error {
-	if ws.cfg.Verbose {
-		ws.engine.Use(gin.Logger())
-	}
+	// 设置全局中间件
+	ws.engine.Use(middleware.Logger())
+	ws.engine.Use(gin.Recovery())
+	ws.engine.Use(middleware.CORS())
 
-	// set app secret key
-	ginext.InitJWT(ws.cfg.App.Secret)
+	ws.engine.LoadHTMLGlob(ws.cfg.App.Web + "/*.html")
+	ws.engine.Static("/static", ws.cfg.App.Web+"/static")
 
-	// register middleware template and static
-	tmplPattern := strings.Join([]string{
-		ws.cfg.App.Web,
-		"*.html",
-	}, "/")
-
-	static := strings.Join([]string{
-		ws.cfg.App.Web,
-		"static",
-	}, "/")
-
-	ws.engine.LoadHTMLGlob(tmplPattern)
-	ws.engine.Static("/static", static)
-
-	baseGrp := ws.engine.Group("")
-	ws.registerHomepage(baseGrp)
-
-	adminBaseGrp := ws.engine.Group("admin")
-	ws.registerAdminPages(adminBaseGrp)
-
-	pbapp.RegisterApiServerHTTPServer(ws.engine, ws.api)
-	pbapp.RegisterAdminServerHTTPServer(ws.engine, ws.admin)
+	// 注册路由
+	ws.registerRoutes()
 
 	return nil
 }
 
-func (ws *WebServer) registerHomepage(rg *gin.RouterGroup) {
-	rg.GET("/",
-		RedirectHandler("/login"),
-		ginext.Authenticate(ginext.RoleUser, ginext.AuthTypeWeb),
-		func(c *gin.Context) {
-			c.HTML(http.StatusOK, "index.html", gin.H{
-				"name": ws.cfg.App.Name,
-			})
-		})
-}
+func (ws *WebServer) registerRoutes() {
+	// 注册统一认证路由（最先注册，避免冲突）
+	authGroup := ws.engine.Group("")
+	ws.auth.RegisterRoutes(authGroup)
 
-func (ws *WebServer) registerAdminPages(rg *gin.RouterGroup) {
-	rg.GET("/",
-		RedirectHandler("/admin/login"),
-		ginext.Authenticate(ginext.RoleAdmin, ginext.AuthTypeWeb),
-		func(c *gin.Context) {
-			c.HTML(http.StatusOK, "admin_index.html", gin.H{
-				"name": ws.cfg.App.Name,
-			})
-		})
+	// 注册 API 路由（可选鉴权）
+	apiGroup := ws.engine.Group("api")
+	apiGroup.Use(middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeBearer,
+		Required: true,
+		Role:     constant.RoleUser,
+	}, ws.jwtManager))
+	ws.api.RegisterRoutes(apiGroup)
 
-	rg.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_login.html", gin.H{
-			"name": ws.cfg.App.Name,
-		})
+	// 注册管理路由（需要管理员权限）
+	adminGroup := ws.engine.Group("admin")
+	adminGroup.Use(middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeCookie,
+		Required: true,
+		Role:     constant.RoleAdmin,
+	}, ws.jwtManager))
+	ws.admin.RegisterRoutes(adminGroup)
+
+	// 注册用户路由（需要用户权限）
+	userGroup := ws.engine.Group("user")
+	userGroup.Use(middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeCookie,
+		Required: true,
+		Role:     constant.RoleUser,
+	}, ws.jwtManager))
+	ws.user.RegisterRoutes(userGroup)
+
+	// 页面路由（最后注册，避免被API路由覆盖）
+	// 首页 - 不需要认证
+	ws.engine.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", gin.H{})
+	})
+
+	// 登录页面 - 不需要认证
+	ws.engine.GET("/login", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "login.html", gin.H{})
 	})
 }
 
 func (ws *WebServer) Run(errC chan<- error) {
 	addr := fmt.Sprintf(":%d", ws.cfg.App.Port)
-	log.Println("[Controllers] http server listen on ", addr)
+	logger.WithField("addr", addr).Info("HTTP server starting")
+
 	err := ws.engine.Run(addr)
 	if err != nil {
 		errC <- err
-	}
-}
-
-// RedirectHandler handler
-func RedirectHandler(location string) func(c *gin.Context) {
-	return func(c *gin.Context) {
-		c.Next()
-
-		// if response status is 401, redirect to login page
-		if c.Writer.Status() == http.StatusUnauthorized {
-			c.Redirect(http.StatusTemporaryRedirect, location)
-			c.Abort()
-			return
-		}
 	}
 }

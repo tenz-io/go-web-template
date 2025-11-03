@@ -3,9 +3,8 @@ package constant
 // Role is user role
 // ENUM(
 //
-//	anonymous=0,
+//	user=0,
 //	admin=1,
-//	user=2,
 //
 // )
 //

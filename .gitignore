@@ -30,7 +30,9 @@ bin
 
 # env files
 .env
+.cache
 
 
 .DS_Store
 http-client.private.env.json
+data/

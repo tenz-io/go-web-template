@@ -1,75 +1,171 @@
 package controller
 
 import (
-	"context"
 	"net/http"
-	"time"
 
-	"github.com/tenz-io/gokit/ginext"
-	"github.com/tenz-io/gokit/ginext/errcode"
-	"github.com/tenz-io/gokit/ginext/metadata"
+	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
 
-	pbapp "go-web-template/api/http/app"
+	"go-web-template/internal/constant"
+	"go-web-template/internal/controller/request"
+	"go-web-template/internal/controller/response"
+	"go-web-template/internal/middleware"
+	"go-web-template/internal/model"
 	"go-web-template/internal/service"
 )
 
-var (
-	_ pbapp.AdminServerHTTPServer = (*AdminServer)(nil)
-)
-
-type AdminServer struct {
+type AdminController struct {
 	userService service.User
+	jwtManager  *middleware.JWTManager
 }
 
-func NewAdminServer(
-	userService service.User,
-) *AdminServer {
-	return &AdminServer{
+func NewAdminController(userService service.User, jwtManager *middleware.JWTManager) *AdminController {
+	return &AdminController{
 		userService: userService,
+		jwtManager:  jwtManager,
 	}
 }
 
-func (a *AdminServer) Login(ctx context.Context, req *pbapp.AdminLoginRequest) (*pbapp.AdminLoginResponse, error) {
-	var (
-		meta = metadata.SafeFromContext(ctx)
-		le   = logger.FromContext(ctx).WithFields(logger.Fields{
-			"username": req.GetUsername(),
-			"meta":     meta,
+// 注册管理路由
+func (a *AdminController) RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/home", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "admin_home.html", gin.H{
+			"name": "go-web-template",
 		})
-	)
-
-	defer func() {
-		le.Debug("login called")
-	}()
-
-	ok, _ := a.userService.VerifyAdmin(ctx, req.GetUsername(), req.GetPassword())
-	if !ok {
-		return nil, errcode.Unauthorized(http.StatusOK, "auth failed")
-	}
-
-	expiredAt := time.Now().Add(15 * time.Minute)
-	accessToken, err := ginext.GenerateToken(1, ginext.RoleAdmin, ginext.TokenTypeAccess, expiredAt)
-	if err != nil {
-		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
-	}
-
-	// set access token to cookie
-	meta.Ctx.SetCookie(ginext.CookieTokenName, accessToken, 900, "/", "", false, true)
-
-	return &pbapp.AdminLoginResponse{}, nil
+	})
+	r.GET("/users", a.GetUsers)
+	r.POST("/add_user", a.AddUser)
+	r.DELETE("/delete_user", a.DeleteUser)
 }
 
-func (a *AdminServer) AddToken(ctx context.Context, req *pbapp.AdminAddTokenRequest) (*pbapp.AdminAddTokenResponse, error) {
-	// generate access token
-	expiresAt := time.Now().Add(time.Duration(req.GetExpire()) * time.Hour * 24)
-	accessToken, err := ginext.GenerateToken(req.GetUserid(), ginext.RoleUser, ginext.TokenTypeAccess, expiresAt)
+// GetUsers 获取用户列表
+func (a *AdminController) GetUsers(c *gin.Context) {
+	le := logger.FromContext(c.Request.Context())
+	le.Debug("admin get users called")
+
+	// 获取分页参数
+	limit := 100 // 默认限制
+	offset := 0
+
+	// 获取用户列表
+	users, total, err := a.userService.ListUsers(c.Request.Context(), limit, offset)
 	if err != nil {
-		return nil, errcode.InternalServer(http.StatusInternalServerError, "failed to generate token")
+		le.Error("failed to get users")
+		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    500,
+				Message: "获取用户列表失败",
+			},
+		})
+		return
 	}
 
-	return &pbapp.AdminAddTokenResponse{
-		AccessToken: accessToken,
-	}, nil
+	// 转换用户角色为字符串
+	var userList []gin.H
+	for _, user := range users {
+		userList = append(userList, gin.H{
+			"id":         user.ID,
+			"username":   user.Username,
+			"role":       constant.Role(user.Role).String(),
+			"created_at": user.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    0,
+			Message: "获取用户列表成功",
+		},
+		Data: gin.H{
+			"users": userList,
+			"total": total,
+		},
+	})
+}
+
+// AddUser 添加用户
+func (a *AdminController) AddUser(c *gin.Context) {
+	var req request.AdminAddUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "请求参数错误",
+			},
+		})
+		return
+	}
+
+	le := logger.FromContext(c.Request.Context())
+	le.Debug("admin add user called")
+
+	// 将角色字符串转换为数字
+	role, err := constant.ParseRole(req.Role)
+	if err != nil {
+		le.Error("invalid role")
+		c.JSON(http.StatusOK, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "无效的用户角色",
+			},
+		})
+		return
+	}
+
+	// 创建用户
+	user, err := a.userService.Register(c.Request.Context(), &model.CreateUserRequest{
+		Username: req.Username,
+		Password: req.Password,
+		Role:     int32(role),
+	})
+	if err != nil {
+		le.Error("failed to create user")
+		c.JSON(http.StatusOK, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "创建用户失败: " + err.Error(),
+			},
+		})
+		return
+	}
+
+	le.Info("user created successfully")
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    0,
+			Message: "用户创建成功",
+		},
+		Data: user,
+	})
+}
+
+// DeleteUser 删除用户
+func (a *AdminController) DeleteUser(c *gin.Context) {
+	var req request.AdminDeleteUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "请求参数错误",
+			},
+		})
+		return
+	}
+
+	le := logger.FromContext(c.Request.Context())
+	le.Debug("admin delete user called")
+
+	// 删除用户
+	err := a.userService.DeleteUser(c.Request.Context(), req.UserID)
+	if err != nil {
+		le.Error("failed to delete user")
+		c.JSON(http.StatusOK, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "删除用户失败: " + err.Error(),
+			},
+		})
+		return
+	}
 
 }

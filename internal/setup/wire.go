@@ -9,15 +9,16 @@ import (
 )
 
 func InitializeControllers(
-	_ *config.Config,
+	cfg *config.Config,
 ) (*Controllers, error) {
 	wire.Build(
 		wire.Struct(new(Controllers), "*"),
+		ComponentProviderSet,
 		RepoProviderSet,
 		ServiceProviderSet,
 		ControllerProviderSet,
+		JobProviderSet,
 	)
 
 	return nil, nil
-
 }

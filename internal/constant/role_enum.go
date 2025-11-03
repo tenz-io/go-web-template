@@ -12,22 +12,19 @@ import (
 )
 
 const (
-	// RoleAnonymous is a Role of type Anonymous.
-	RoleAnonymous Role = iota
+	// RoleUser is a Role of type User.
+	RoleUser Role = iota
 	// RoleAdmin is a Role of type Admin.
 	RoleAdmin
-	// RoleUser is a Role of type User.
-	RoleUser
 )
 
 var ErrInvalidRole = errors.New("not a valid Role")
 
-const _RoleName = "anonymousadminuser"
+const _RoleName = "useradmin"
 
 var _RoleMap = map[Role]string{
-	RoleAnonymous: _RoleName[0:9],
-	RoleAdmin:     _RoleName[9:14],
-	RoleUser:      _RoleName[14:18],
+	RoleUser:  _RoleName[0:4],
+	RoleAdmin: _RoleName[4:9],
 }
 
 // String implements the Stringer interface.
@@ -46,9 +43,8 @@ func (x Role) IsValid() bool {
 }
 
 var _RoleValue = map[string]Role{
-	_RoleName[0:9]:   RoleAnonymous,
-	_RoleName[9:14]:  RoleAdmin,
-	_RoleName[14:18]: RoleUser,
+	_RoleName[0:4]: RoleUser,
+	_RoleName[4:9]: RoleAdmin,
 }
 
 // ParseRole attempts to convert a string to a Role.

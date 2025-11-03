@@ -9,20 +9,35 @@ package setup
 import (
 	"go-web-template/internal/config"
 	"go-web-template/internal/controller"
-	"go-web-template/internal/repository"
+	"go-web-template/internal/job"
+	"go-web-template/internal/repository/dao"
 	"go-web-template/internal/service"
 )
 
 // Injectors from wire.go:
 
-func InitializeControllers(configConfig *config.Config) (*Controllers, error) {
-	user := repository.NewUser()
-	apiServer := controller.NewApiServer(user)
-	serviceUser := service.NewUser(configConfig, user)
-	adminServer := controller.NewAdminServer(serviceUser)
-	webServer := controller.NewWebServer(configConfig, apiServer, adminServer)
+func InitializeControllers(cfg *config.Config) (*Controllers, error) {
+	db, err := ProvideDB(cfg)
+	if err != nil {
+		return nil, err
+	}
+	user := dao.NewUserDao(db)
+	jwtManager, err := ProvideJWTManager(cfg)
+	if err != nil {
+		return nil, err
+	}
+	apiController := controller.NewApiController(user, jwtManager)
+	serviceUser := service.NewUserService(cfg, user)
+	adminController := controller.NewAdminController(serviceUser, jwtManager)
+	authController := controller.NewAuthController(user, serviceUser, jwtManager)
+	userController := controller.NewUserController(serviceUser, jwtManager)
+	webServer := controller.NewWebServer(cfg, apiController, adminController, authController, userController, jwtManager)
+	cron := ProvideCron()
+	healthReporter := job.NewHealthReporter(cron)
+	manager := job.NewManager(healthReporter)
 	controllers := &Controllers{
 		webServer: webServer,
+		jobMgr:    manager,
 	}
 	return controllers, nil
 }
