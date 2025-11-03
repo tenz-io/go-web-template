@@ -8,6 +8,8 @@ BIN_DIR := bin
 LOG_DIR := log
 CONFIG_FILE := config/app.yaml
 PORT := 8090
+TOOL_DIR := tool
+TOOL_TARGETS := $(notdir $(wildcard $(TOOL_DIR)/*))
 
 GOCACHE := $(CURDIR)/.cache/go-build
 export GOCACHE
@@ -136,12 +138,13 @@ test-coverage: ## 运行测试并生成覆盖率报告
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "$(GREEN)[SUCCESS]$(NC) 覆盖率报告已生成: coverage.html"
 
-$(TOOL_TAGET):
+$(TOOL_TARGETS):
 	@echo "=== build tool $@"
-	scripts/build-tool.sh $@
+	@mkdir -p $(BIN_DIR)
+	@scripts/build-tool.sh $@
 
 .PHONY: build-tools
-build-tools: $(TOOL_TAGET)
+build-tools: $(TOOL_TARGETS)
 
 # 清理
 .PHONY: clean
@@ -173,7 +176,7 @@ info: ## 显示项目信息
 
 # 完整构建流程
 .PHONY: all
-all: clean deps generate build test ## 完整构建流程
+all: clean deps generate build build-tools test ## 完整构建流程
 
 .PHONY: ensure-cache
 ensure-cache:
