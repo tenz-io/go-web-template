@@ -10,7 +10,6 @@ import (
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
-	"go-web-template/internal/constant"
 	"go-web-template/internal/model"
 
 	"gorm.io/gorm"
@@ -20,10 +19,9 @@ import (
 type User interface {
 	// 认证相关
 	VerifyUser(ctx context.Context, username, password string) (*model.User, error)
-	VerifyAdmin(ctx context.Context, username, password string) (bool, error)
 
 	// 用户管理
-	CreateUser(ctx context.Context, req *model.CreateUserRequest) (*model.User, error)
+	Register(ctx context.Context, req *model.CreateUserRequest) (*model.User, error)
 	UpdatePassword(ctx context.Context, userID int64, req *model.UpdatePasswordRequest) error
 	DeleteUser(ctx context.Context, userID int64) error
 	GetUser(ctx context.Context, userID int64) (*model.User, error)
@@ -49,37 +47,18 @@ type user struct {
 func (u *user) VerifyUser(ctx context.Context, username, password string) (*model.User, error) {
 	le := logger.FromContext(ctx)
 
-	user, err := u.userRepo.VerifyUser(ctx, username, password)
+	userModel, err := u.userRepo.VerifyUser(ctx, username, password)
 	if err != nil {
 		le.Debug("user verification failed")
 		return nil, err
 	}
 
 	le.Debug("user verified successfully")
-	return user, nil
+	return userModel, nil
 }
 
-// VerifyAdmin 验证管理员凭据
-func (u *user) VerifyAdmin(ctx context.Context, username, password string) (bool, error) {
-	le := logger.FromContext(ctx)
-
-	user, err := u.userRepo.VerifyUser(ctx, username, password)
-	if err != nil {
-		le.Debug("admin verification failed")
-		return false, err
-	}
-
-	if user.Role != int32(constant.RoleAdmin) {
-		le.Debug("user is not admin")
-		return false, nil
-	}
-
-	le.Debug("admin verified successfully")
-	return true, nil
-}
-
-// CreateUser 创建用户
-func (u *user) CreateUser(ctx context.Context, req *model.CreateUserRequest) (*model.User, error) {
+// Register 创建用户
+func (u *user) Register(ctx context.Context, req *model.CreateUserRequest) (*model.User, error) {
 	le := logger.FromContext(ctx)
 
 	// 检查用户名是否已存在

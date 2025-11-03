@@ -32,21 +32,21 @@ func NewAuthController(userDao dao.User, userService service.User, jwtManager *m
 }
 
 // RegisterRoutes 注册认证路由
-func (a *AuthController) RegisterRoutes(rg *gin.RouterGroup) {
-	rg.POST("/login", a.Login)
-	rg.POST("/logout", a.Logout)
+func (ac *AuthController) RegisterRoutes(rg *gin.RouterGroup) {
+	rg.POST("/login", ac.Login)
+	rg.POST("/logout", ac.Logout)
 
 	protected := rg.Group("/auth")
 	protected.Use(middleware.Auth(middleware.AuthConfig{
 		Type:     middleware.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleUser,
-	}, a.jwtManager))
-	protected.POST("/change_password", a.ChangePassword)
+	}, ac.jwtManager))
+	protected.POST("/change_password", ac.ChangePassword)
 }
 
 // Login 统一登录接口
-func (a *AuthController) Login(c *gin.Context) {
+func (ac *AuthController) Login(c *gin.Context) {
 	var req request.LoginRequest
 
 	// 只支持JSON提交
@@ -67,7 +67,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	le.Debug("auth login")
 
 	// 验证用户凭据
-	user, err := a.userDao.VerifyUser(c.Request.Context(), req.Username, req.Password)
+	userModel, err := ac.userService.VerifyUser(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
 		le.Warn("user login failed")
 		c.JSON(http.StatusOK, response.LoginResponse{
@@ -80,7 +80,7 @@ func (a *AuthController) Login(c *gin.Context) {
 	}
 
 	// 生成 JWT token
-	token, err := a.jwtManager.GenerateToken(user.ID, user.Role)
+	token, err := ac.jwtManager.GenerateToken(userModel.ID, userModel.Role)
 	if err != nil {
 		le.Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -97,13 +97,13 @@ func (a *AuthController) Login(c *gin.Context) {
 
 	// 根据角色重定向到不同页面
 	redirect := "/user/home"
-	if user.Role == int32(constant.RoleAdmin) {
+	if userModel.Role == int32(constant.RoleAdmin) {
 		redirect = "/admin/home"
 	}
 
 	le.WithFields(logger.Fields{
-		"user_id":  user.ID,
-		"role":     constant.Role(user.Role).String(),
+		"user_id":  userModel.ID,
+		"role":     constant.Role(userModel.Role).String(),
 		"redirect": redirect,
 	}).Info("user login successful")
 
@@ -113,13 +113,13 @@ func (a *AuthController) Login(c *gin.Context) {
 			Code:    0,
 			Message: "登录成功",
 		},
-		Role:     constant.Role(user.Role).String(),
+		Role:     constant.Role(userModel.Role).String(),
 		Redirect: redirect,
 	})
 }
 
 // Logout 登出接口
-func (a *AuthController) Logout(c *gin.Context) {
+func (ac *AuthController) Logout(c *gin.Context) {
 	// 清除 Cookie
 	c.SetCookie(middleware.JWTTokenCookieName, "", -1, "/", "", false, true)
 
@@ -130,7 +130,7 @@ func (a *AuthController) Logout(c *gin.Context) {
 }
 
 // ChangePassword 修改密码（用户/管理员通用）
-func (a *AuthController) ChangePassword(c *gin.Context) {
+func (ac *AuthController) ChangePassword(c *gin.Context) {
 	var req request.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -159,7 +159,7 @@ func (a *AuthController) ChangePassword(c *gin.Context) {
 		NewPassword: req.NewPassword,
 	}
 
-	if err := a.userService.UpdatePassword(c.Request.Context(), userID, updateReq); err != nil {
+	if err := ac.userService.UpdatePassword(c.Request.Context(), userID, updateReq); err != nil {
 		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to update password")
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{

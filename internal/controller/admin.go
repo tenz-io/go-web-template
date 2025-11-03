@@ -113,7 +113,7 @@ func (a *AdminController) AddUser(c *gin.Context) {
 	}
 
 	// 创建用户
-	user, err := a.userService.CreateUser(c.Request.Context(), &model.CreateUserRequest{
+	user, err := a.userService.Register(c.Request.Context(), &model.CreateUserRequest{
 		Username: req.Username,
 		Password: req.Password,
 		Role:     int32(role),

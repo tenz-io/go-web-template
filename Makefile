@@ -136,6 +136,13 @@ test-coverage: ## 运行测试并生成覆盖率报告
 	@go tool cover -html=coverage.out -o coverage.html
 	@echo "$(GREEN)[SUCCESS]$(NC) 覆盖率报告已生成: coverage.html"
 
+$(TOOL_TAGET):
+	@echo "=== build tool $@"
+	scripts/build-tool.sh $@
+
+.PHONY: build-tools
+build-tools: $(TOOL_TAGET)
+
 # 清理
 .PHONY: clean
 clean: ## 清理构建文件
@@ -161,6 +168,8 @@ info: ## 显示项目信息
 	@echo "$(BLUE)[INFO]$(NC) 默认管理员账号:"
 	@echo "  用户名: admin"
 	@echo "  密码: admin"
+
+
 
 # 完整构建流程
 .PHONY: all
