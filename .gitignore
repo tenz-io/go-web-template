@@ -30,6 +30,7 @@ bin
 
 # env files
 .env
+.cache
 
 
 .DS_Store
