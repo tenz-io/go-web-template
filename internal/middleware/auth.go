@@ -16,14 +16,15 @@ func Logger() gin.HandlerFunc {
 
 		c.Next()
 
-		end := time.Now()
-		_ = end.Sub(start) // 计算延迟但不使用
-
 		if raw != "" {
 			path = path + "?" + raw
 		}
 
-		logger.FromContext(c.Request.Context()).Info("HTTP Request")
+		logger.FromContext(c.Request.Context()).
+			WithFields(logger.Fields{
+				"path":     path,
+				"duration": time.Now().Sub(start).String(),
+			}).Info("HTTP Request")
 	}
 }
 

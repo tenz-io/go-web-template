@@ -6,9 +6,3 @@ package response
 type HelloResponse struct {
 	BaseResponse
 }
-
-// UploadResponse 文件上传响应
-type UploadResponse struct {
-	BaseResponse
-	Key string `json:"key"`
-}

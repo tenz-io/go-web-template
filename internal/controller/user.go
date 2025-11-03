@@ -149,9 +149,7 @@ func (u *UserServer) generateToken(c *gin.Context) {
 	if expireSeconds <= 0 {
 		expireSeconds = 3600
 	}
-	if expireSeconds > int((24 * time.Hour * 7).Seconds()) {
-		expireSeconds = int((24 * time.Hour * 7).Seconds())
-	}
+
 	if expireSeconds < 60 {
 		expireSeconds = 60
 	}
