@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/google/wire v0.6.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/tenz-io/gokit/cmd v1.0.8
 	github.com/tenz-io/gokit/logger v1.5.3
 	gorm.io/driver/sqlite v1.5.6

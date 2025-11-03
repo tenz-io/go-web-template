@@ -9,6 +9,9 @@ LOG_DIR := log
 CONFIG_FILE := config/app.yaml
 PORT := 8090
 
+GOCACHE := $(CURDIR)/.cache/go-build
+export GOCACHE
+
 # 颜色定义
 GREEN := \033[0;32m
 YELLOW := \033[1;33m
@@ -75,14 +78,14 @@ install-tools: ## 安装开发工具
 
 # 生成代码
 .PHONY: generate
-generate: ## 生成所有代码
+generate: ensure-cache ## 生成所有代码
 	@echo "$(BLUE)[INFO]$(NC) 生成枚举代码..."
 	@go generate ./internal/constant/... ./internal/repository/... ./internal/service/...
 	@echo "$(GREEN)[SUCCESS]$(NC) 代码生成完成"
 
 # 生成 wire 代码
 .PHONY: wire
-wire: ## 生成依赖注入代码
+wire: ensure-cache ## 生成依赖注入代码
 	@echo "$(BLUE)[INFO]$(NC) 生成 wire 代码..."
 	@wire gen $(REPO_NAME)/internal/setup/...
 	@echo "$(GREEN)[SUCCESS]$(NC) Wire 代码生成完成"
@@ -198,6 +201,10 @@ info: ## 显示项目信息
 # 完整构建流程
 .PHONY: all
 all: clean deps generate build test ## 完整构建流程
+
+.PHONY: ensure-cache
+ensure-cache:
+	@mkdir -p $(GOCACHE)
 	@echo "$(GREEN)[SUCCESS]$(NC) 完整构建流程完成"
 
 # 开发环境初始化

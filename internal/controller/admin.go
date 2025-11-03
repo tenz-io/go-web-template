@@ -14,20 +14,20 @@ import (
 	"go-web-template/internal/service"
 )
 
-type AdminServer struct {
+type AdminController struct {
 	userService service.User
 	jwtManager  *middleware.JWTManager
 }
 
-func NewAdminServer(userService service.User, jwtManager *middleware.JWTManager) *AdminServer {
-	return &AdminServer{
+func NewAdminController(userService service.User, jwtManager *middleware.JWTManager) *AdminController {
+	return &AdminController{
 		userService: userService,
 		jwtManager:  jwtManager,
 	}
 }
 
 // 注册管理路由
-func (a *AdminServer) RegisterRoutes(r *gin.RouterGroup) {
+func (a *AdminController) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/home", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "admin_home.html", gin.H{
 			"name": "go-web-template",
@@ -39,7 +39,7 @@ func (a *AdminServer) RegisterRoutes(r *gin.RouterGroup) {
 }
 
 // GetUsers 获取用户列表
-func (a *AdminServer) GetUsers(c *gin.Context) {
+func (a *AdminController) GetUsers(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	le.Debug("admin get users called")
 
@@ -84,7 +84,7 @@ func (a *AdminServer) GetUsers(c *gin.Context) {
 }
 
 // AddUser 添加用户
-func (a *AdminServer) AddUser(c *gin.Context) {
+func (a *AdminController) AddUser(c *gin.Context) {
 	var req request.AdminAddUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -140,7 +140,7 @@ func (a *AdminServer) AddUser(c *gin.Context) {
 }
 
 // DeleteUser 删除用户
-func (a *AdminServer) DeleteUser(c *gin.Context) {
+func (a *AdminController) DeleteUser(c *gin.Context) {
 	var req request.AdminDeleteUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{

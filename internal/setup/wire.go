@@ -12,22 +12,12 @@ func InitializeControllers(
 	cfg *config.Config,
 ) (*Controllers, error) {
 	wire.Build(
-		// 数据库
-		NewDatabase,
-		// JWT 管理器
-		NewJWTManager,
-		// 仓库层
-		NewUserRepository,
-		// 服务层
-		NewUserService,
-		// 控制器层
-		NewApiController,
-		NewAdminController,
-		NewAuthController,
-		NewUserController,
-		NewWebController,
-		// 主控制器
-		NewControllers,
+		wire.Struct(new(Controllers), "*"),
+		ComponentProviderSet,
+		RepoProviderSet,
+		ServiceProviderSet,
+		ControllerProviderSet,
+		JobProviderSet,
 	)
 
 	return nil, nil

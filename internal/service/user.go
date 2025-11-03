@@ -30,7 +30,7 @@ type User interface {
 	ListUsers(ctx context.Context, limit, offset int) ([]*model.User, int64, error)
 }
 
-func NewUser(
+func NewUserService(
 	cfg *config.Config,
 	userRepo dao.User,
 ) User {

@@ -14,20 +14,20 @@ import (
 	"go-web-template/internal/service"
 )
 
-type UserServer struct {
+type UserController struct {
 	userService service.User
 	jwtManager  *middleware.JWTManager
 }
 
-func NewUserServer(userService service.User, jwtManager *middleware.JWTManager) *UserServer {
-	return &UserServer{
+func NewUserController(userService service.User, jwtManager *middleware.JWTManager) *UserController {
+	return &UserController{
 		userService: userService,
 		jwtManager:  jwtManager,
 	}
 }
 
 // RegisterRoutes 注册用户侧路由
-func (u *UserServer) RegisterRoutes(r *gin.RouterGroup) {
+func (u *UserController) RegisterRoutes(r *gin.RouterGroup) {
 	// 页面
 	r.GET("/home", u.home)
 
@@ -35,7 +35,7 @@ func (u *UserServer) RegisterRoutes(r *gin.RouterGroup) {
 	r.POST("/generate_token", u.generateToken)
 }
 
-func (u *UserServer) home(c *gin.Context) {
+func (u *UserController) home(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	userID, _, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
@@ -68,7 +68,7 @@ func (u *UserServer) home(c *gin.Context) {
 }
 
 // generateToken 用户生成 API Token（JWT 格式）
-func (u *UserServer) generateToken(c *gin.Context) {
+func (u *UserController) generateToken(c *gin.Context) {
 	var req request.UserGenerateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{

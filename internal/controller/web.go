@@ -15,14 +15,14 @@ import (
 type WebServer struct {
 	engine     *gin.Engine
 	cfg        *config.Config
-	api        *ApiServer
-	admin      *AdminServer
-	auth       *AuthServer
-	user       *UserServer
+	api        *ApiController
+	admin      *AdminController
+	auth       *AuthController
+	user       *UserController
 	jwtManager *middleware.JWTManager
 }
 
-func NewWebServer(cfg *config.Config, apiServer *ApiServer, adminServer *AdminServer, authServer *AuthServer, userServer *UserServer, jwtManager *middleware.JWTManager) *WebServer {
+func NewWebServer(cfg *config.Config, apiServer *ApiController, adminServer *AdminController, authServer *AuthController, userServer *UserController, jwtManager *middleware.JWTManager) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {

@@ -16,15 +16,15 @@ import (
 )
 
 // AuthServer 统一认证服务器
-type AuthServer struct {
+type AuthController struct {
 	userDao     dao.User
 	userService service.User
 	jwtManager  *middleware.JWTManager
 }
 
-// NewAuthServer 创建统一认证服务器
-func NewAuthServer(userDao dao.User, userService service.User, jwtManager *middleware.JWTManager) *AuthServer {
-	return &AuthServer{
+// NewAuthController 创建统一认证服务器
+func NewAuthController(userDao dao.User, userService service.User, jwtManager *middleware.JWTManager) *AuthController {
+	return &AuthController{
 		userDao:     userDao,
 		userService: userService,
 		jwtManager:  jwtManager,
@@ -32,7 +32,7 @@ func NewAuthServer(userDao dao.User, userService service.User, jwtManager *middl
 }
 
 // RegisterRoutes 注册认证路由
-func (a *AuthServer) RegisterRoutes(rg *gin.RouterGroup) {
+func (a *AuthController) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/login", a.Login)
 	rg.POST("/logout", a.Logout)
 
@@ -46,7 +46,7 @@ func (a *AuthServer) RegisterRoutes(rg *gin.RouterGroup) {
 }
 
 // Login 统一登录接口
-func (a *AuthServer) Login(c *gin.Context) {
+func (a *AuthController) Login(c *gin.Context) {
 	var req request.LoginRequest
 
 	// 只支持JSON提交
@@ -119,7 +119,7 @@ func (a *AuthServer) Login(c *gin.Context) {
 }
 
 // Logout 登出接口
-func (a *AuthServer) Logout(c *gin.Context) {
+func (a *AuthController) Logout(c *gin.Context) {
 	// 清除 Cookie
 	c.SetCookie(middleware.JWTTokenCookieName, "", -1, "/", "", false, true)
 
@@ -130,7 +130,7 @@ func (a *AuthServer) Logout(c *gin.Context) {
 }
 
 // ChangePassword 修改密码（用户/管理员通用）
-func (a *AuthServer) ChangePassword(c *gin.Context) {
+func (a *AuthController) ChangePassword(c *gin.Context) {
 	var req request.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{

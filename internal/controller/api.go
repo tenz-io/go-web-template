@@ -12,25 +12,25 @@ import (
 	"go-web-template/internal/middleware"
 )
 
-type ApiServer struct {
+type ApiController struct {
 	userRepo   dao.User
 	jwtManager *middleware.JWTManager
 }
 
-func NewApiServer(userRepo dao.User, jwtManager *middleware.JWTManager) *ApiServer {
-	return &ApiServer{
+func NewApiController(userRepo dao.User, jwtManager *middleware.JWTManager) *ApiController {
+	return &ApiController{
 		userRepo:   userRepo,
 		jwtManager: jwtManager,
 	}
 }
 
 // 注册 API 路由
-func (as *ApiServer) RegisterRoutes(r *gin.RouterGroup) {
+func (as *ApiController) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/hello", as.Hello)
 }
 
 // Hello 接口
-func (as *ApiServer) Hello(c *gin.Context) {
+func (as *ApiController) Hello(c *gin.Context) {
 	var req request.HelloRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
