@@ -11,7 +11,6 @@ import (
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
 	"go-web-template/internal/middleware"
-	"go-web-template/internal/model"
 	"go-web-template/internal/service"
 )
 
@@ -33,7 +32,6 @@ func (u *UserServer) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/home", u.home)
 
 	// API
-	r.POST("/change_password", u.changePassword)
 	r.POST("/generate_token", u.generateToken)
 }
 
@@ -66,54 +64,6 @@ func (u *UserServer) home(c *gin.Context) {
 	c.HTML(http.StatusOK, "user_home.html", gin.H{
 		"name": userModel.Username,
 		"role": constant.Role(userModel.Role).String(),
-	})
-}
-
-func (u *UserServer) changePassword(c *gin.Context) {
-	var req request.UserChangePasswordRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
-		return
-	}
-
-	userID, _, err := middleware.GetUserInfoFromContext(c)
-	if err != nil {
-		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
-		return
-	}
-
-	updateReq := &model.UpdatePasswordRequest{
-		OldPassword: req.OldPassword,
-		NewPassword: req.NewPassword,
-	}
-
-	if err := u.userService.UpdatePassword(c.Request.Context(), userID, updateReq); err != nil {
-		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to change password")
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: err.Error(),
-			},
-		})
-		return
-	}
-
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "密码修改成功",
-		},
 	})
 }
 

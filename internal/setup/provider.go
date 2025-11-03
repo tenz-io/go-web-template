@@ -40,8 +40,8 @@ func NewAdminController(userService service.User, jwtManager *middleware.JWTMana
 	return controller.NewAdminServer(userService, jwtManager)
 }
 
-func NewAuthController(userRepo dao.User, jwtManager *middleware.JWTManager) *controller.AuthServer {
-	return controller.NewAuthServer(userRepo, jwtManager)
+func NewAuthController(userRepo dao.User, userService service.User, jwtManager *middleware.JWTManager) *controller.AuthServer {
+	return controller.NewAuthServer(userRepo, userService, jwtManager)
 }
 
 func NewUserController(userService service.User, jwtManager *middleware.JWTManager) *controller.UserServer {

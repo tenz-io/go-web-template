@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"go-web-template/internal/repository/dao"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,19 +10,24 @@ import (
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
 	"go-web-template/internal/middleware"
+	"go-web-template/internal/model"
+	"go-web-template/internal/repository/dao"
+	"go-web-template/internal/service"
 )
 
 // AuthServer 统一认证服务器
 type AuthServer struct {
-	userDao    dao.User
-	jwtManager *middleware.JWTManager
+	userDao     dao.User
+	userService service.User
+	jwtManager  *middleware.JWTManager
 }
 
 // NewAuthServer 创建统一认证服务器
-func NewAuthServer(userDao dao.User, jwtManager *middleware.JWTManager) *AuthServer {
+func NewAuthServer(userDao dao.User, userService service.User, jwtManager *middleware.JWTManager) *AuthServer {
 	return &AuthServer{
-		userDao:    userDao,
-		jwtManager: jwtManager,
+		userDao:     userDao,
+		userService: userService,
+		jwtManager:  jwtManager,
 	}
 }
 
@@ -31,6 +35,14 @@ func NewAuthServer(userDao dao.User, jwtManager *middleware.JWTManager) *AuthSer
 func (a *AuthServer) RegisterRoutes(rg *gin.RouterGroup) {
 	rg.POST("/login", a.Login)
 	rg.POST("/logout", a.Logout)
+
+	protected := rg.Group("/auth")
+	protected.Use(middleware.Auth(middleware.AuthConfig{
+		Type:     middleware.AuthTypeCookie,
+		Required: true,
+		Role:     constant.RoleUser,
+	}, a.jwtManager))
+	protected.POST("/change_password", a.ChangePassword)
 }
 
 // Login 统一登录接口
@@ -114,5 +126,54 @@ func (a *AuthServer) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, response.BaseResponse{
 		Code:    0,
 		Message: "登出成功",
+	})
+}
+
+// ChangePassword 修改密码（用户/管理员通用）
+func (a *AuthServer) ChangePassword(c *gin.Context) {
+	var req request.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: "请求参数错误",
+			},
+		})
+		return
+	}
+
+	userID, _, err := middleware.GetUserInfoFromContext(c)
+	if err != nil {
+		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get user info from context")
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    401,
+				Message: "未授权访问",
+			},
+		})
+		return
+	}
+
+	updateReq := &model.UpdatePasswordRequest{
+		OldPassword: req.OldPassword,
+		NewPassword: req.NewPassword,
+	}
+
+	if err := a.userService.UpdatePassword(c.Request.Context(), userID, updateReq); err != nil {
+		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to update password")
+		c.JSON(http.StatusBadRequest, response.ErrorResponse{
+			BaseResponse: response.BaseResponse{
+				Code:    400,
+				Message: err.Error(),
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    0,
+			Message: "密码修改成功",
+		},
 	})
 }

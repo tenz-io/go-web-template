@@ -50,7 +50,7 @@ const UserPage = {
 
         try {
             Utils.showLoading(true, submitSelector);
-            const response = await API.post('/user/change_password', data);
+            const response = await API.post('/auth/change_password', data);
 
             if (response.code === 0) {
                 Utils.showAlert('密码修改成功', 'success');

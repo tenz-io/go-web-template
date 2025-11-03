@@ -200,23 +200,7 @@ const HomePage = {
      * 加载Token列表
      */
     loadTokens: async function() {
-        try {
-            // 模拟数据，实际应该从API获取
-            const tokens = [
-                {
-                    id: 1,
-                    name: 'API访问Token',
-                    created_at: new Date(),
-                    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
-                    status: 'active'
-                }
-            ];
-            
-            this.renderTokensTable(tokens);
-        } catch (error) {
-            console.error('加载Token列表失败:', error);
-            Utils.showAlert('加载Token列表失败', 'danger');
-        }
+        this.renderTokensTable([]);
     },
 
     /**
@@ -226,35 +210,7 @@ const HomePage = {
     renderTokensTable: function(tokens) {
         const tbody = $('#tokensTableBody');
         
-        if (tokens.length === 0) {
-            tbody.html('<tr><td colspan="5" class="text-center text-muted">暂无Token</td></tr>');
-            return;
-        }
-        
-        const html = tokens.map(token => `
-            <tr>
-                <td>${token.name}</td>
-                <td>${Utils.formatDate(token.created_at)}</td>
-                <td>${Utils.formatDate(token.expires_at)}</td>
-                <td>
-                    <span class="badge ${token.status === 'active' ? 'bg-success' : 'bg-secondary'}">
-                        ${token.status === 'active' ? '活跃' : '已过期'}
-                    </span>
-                </td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="HomePage.viewToken(${token.id})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="HomePage.deleteToken(${token.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-        
-        tbody.html(html);
+        tbody.html('<tr><td colspan="5" class="text-center text-muted">生成的 Token 仅会在创建时显示，请在用户页保存。</td></tr>');
     },
 
     /**
@@ -345,12 +301,11 @@ const HomePage = {
         const formData = new FormData(form[0]);
         
         const data = {
-            name: formData.get('tokenName'),
-            expire: parseInt(formData.get('expire'))
+            expire: parseInt(formData.get('expire'), 10)
         };
 
-        if (!data.name) {
-            Utils.showAlert('请输入Token名称', 'warning');
+        if (!Number.isFinite(data.expire) || data.expire <= 0) {
+            Utils.showAlert('请选择有效的过期时间', 'warning');
             return;
         }
 
@@ -360,9 +315,8 @@ const HomePage = {
             const response = await API.post('/user/generate_token', data);
             
             if (response.code === 0) {
-                Utils.showAlert('Token生成成功', 'success');
+                Utils.showAlert('Token生成成功，请及时保存', 'success');
                 $('#generateTokenModal').modal('hide');
-                this.loadTokens();
             } else {
                 Utils.showAlert('生成Token失败: ' + response.message, 'danger');
             }
@@ -395,7 +349,7 @@ const HomePage = {
         try {
             Utils.showLoading(true);
             
-            const response = await API.post('/user/change_password', data);
+            const response = await API.post('/auth/change_password', data);
             
             if (response.code === 0) {
                 Utils.showAlert('密码修改成功', 'success');
@@ -479,10 +433,6 @@ const HomePage = {
     /**
      * 查看Token
      */
-    viewToken: function(tokenId) {
-        Utils.showAlert('查看Token功能开发中...', 'info');
-    },
-
     /**
      * 处理表单提交
      */
