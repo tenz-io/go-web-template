@@ -1,299 +1,179 @@
-# 🚀 Go Web 模板项目
+# Go Web 模板项目
 
-一个现代化的 Go Web 应用模板，提供完整的 API 接口和管理后台功能。
+本仓库提供一个基于 Gin 的全栈 Web 模板，集成了配置管理、身份认证、静态页面、后台任务和数据库访问。项目开箱即用，适合作为业务系统或内部管理平台的脚手架。
 
-## ✨ 特性
+## 主要特性
 
-- 🔧 **RESTful API** - 完整的 API 接口，支持 JSON 格式数据交换
-- 🛡️ **权限管理** - 内置 JWT 认证和基于角色的权限控制系统
-- 🎛️ **管理后台** - 现代化的管理界面，支持用户管理和系统监控
-- 📊 **监控日志** - 完整的日志记录和系统监控功能
-- 🏗️ **依赖注入** - 使用 Google Wire 进行依赖注入
-- 🧪 **测试支持** - 内置 Mock 生成和测试框架
-- 🐳 **Docker 支持** - 提供 Docker 配置和部署脚本
+- Gin 驱动的 HTTP 服务，统一注册 API、用户页面和管理后台
+- 结合 `.env` 与 `config/app.yaml` 的分层配置，并通过 `tenz-io/gokit/cmd` 自动加载
+- 内置自实现的 JWT 管理器，支持 Cookie 与 Bearer 两种鉴权方式
+- 使用 GORM + SQLite 自动建表与默认管理员初始化
+- Wire 提供依赖注入；go-enum 生成枚举辅助代码
+- Cron 定时任务框架，预置健康检查示例
+- Makefile 与 `scripts/quick-start.sh` 整合常用构建、运行、测试流程
+- 前端静态资源位于 `web/`，包含登录、用户中心和管理后台示例页面
 
-## 🏗️ 项目结构
+## 目录总览
 
 ```
-go-web-template/
-├── api/                    # API 定义和生成的文件
-│   ├── http/app/          # HTTP API 定义
-│   └── custom/            # 自定义 protobuf 定义
-├── bin/                   # 编译后的二进制文件
-├── cmd/                   # 应用程序入口
-│   ├── main.go           # 主程序入口
-│   └── webgo/            # Web 服务器
-├── config/                # 配置文件
-│   └── app.yaml          # 应用配置
-├── internal/              # 内部包
-│   ├── config/           # 配置结构
-│   ├── controller/       # 控制器层
-│   │   ├── request/      # 请求结构体
-│   │   └── response/     # 响应结构体
-│   ├── middleware/       # 中间件
-│   ├── model/            # 数据模型
-│   ├── repository/       # 数据访问层
-│   ├── service/          # 业务逻辑层
-│   ├── setup/            # 依赖注入配置
-│   └── util/             # 工具函数
-├── web/                   # 前端页面
-│   ├── static/           # 静态资源
-│   │   ├── css/          # 样式文件
-│   │   ├── js/           # 脚本文件
-│   │   └── favicon.ico   # 网站图标
-│   ├── admin_index.html  # 管理后台首页
-│   ├── admin_login.html  # 管理后台登录页
-│   └── index.html        # 主页面
-├── scripts/              # 脚本文件
-├── log/                  # 日志文件
-└── tool/                 # 工具脚本
+.
+├── cmd/                   # 程序入口与 Server 装配
+│   └── webgo/             # HTTP 服务器实现
+├── config/                # YAML 配置（支持 env 占位符）
+├── data/                  # SQLite 数据文件目录（首次运行自动创建）
+├── docs/                  # 额外文档（如 API 结构说明）
+├── internal/              # 业务代码
+│   ├── config/            # 配置结构体
+│   ├── controller/        # API、用户、管理后台控制器
+│   ├── database/          # GORM 封装与初始化
+│   ├── job/               # 定时任务
+│   ├── middleware/        # 日志、鉴权等中间件
+│   ├── model/             # 数据模型
+│   ├── repository/        # 数据访问层（DAO）
+│   ├── service/           # 业务逻辑
+│   └── setup/             # Wire 依赖注入装配
+├── scripts/               # 辅助脚本与 HTTP 调试文件
+├── tool/                  # 可选工具构建目标
+├── web/                   # 静态页面与前端资源
+└── Makefile               # 构建、运行、测试命令集合
 ```
 
-## 🚀 快速开始
+## 快速开始
 
-### 环境要求
-
-- Go 1.21+
-- 以下工具用于代码生成：
-  - [wire](https://github.com/google/wire) - 依赖注入
-  - [go-enum](https://github.com/abice/go-enum) - 枚举生成
-
-### 安装依赖工具
+### 方式一：使用快速启动脚本
 
 ```bash
-# 安装 wire
-go install github.com/google/wire/cmd/wire@latest
-
-# 安装 go-enum
-go install github.com/abice/go-enum@latest
-
-# 注意：已移除 mockery，使用简化的测试方式
+make quick-start
 ```
 
-### 克隆项目
+脚本会检查 Go 环境、安装 `wire`/`go-enum`、生成代码、构建并运行服务。默认服务地址为 `http://localhost:8090`，日志写入 `./log/app.log`。
 
-```bash
-git clone <your-repo-url>
-cd go-web-template
-```
+### 方式二：手动执行
 
-### 配置环境变量
+1. **准备环境**
+   - Go 1.21+（`go.mod` 目标版本为 1.24）
+   - 代码生成工具：
+     ```bash
+     go install github.com/google/wire/cmd/wire@latest
+     go install github.com/abice/go-enum@latest
+     ```
 
-创建 `.env` 文件：
+2. **克隆仓库并进入目录**
+   ```bash
+   git clone <your-repo-url>
+   cd go-web-template
+   ```
 
-```bash
-# 应用配置
-APP_SECRET=your-secret-key
-APP_ADMIN_USER=admin
-APP_ADMIN_PASS=admin123
+3. **配置环境变量**
+   项目默认读取 `.env`，至少需要设置 JWT 密钥：
+   ```bash
+   cat > .env <<'EOF'
+   JWT_SECRET=please-change-me
+   EOF
+   ```
 
-# 数据库配置
-DB_PASS=your-db-password
+4. **生成依赖代码**
+   ```bash
+   make wire
+   make generate
+   ```
 
-# JWT 配置
-JWT_SECRET=your-jwt-secret
-```
+5. **构建并运行**
+   ```bash
+   make build
+   make run    # 或 go run cmd/main.go -c config/app.yaml -p 8090 -v
+   ```
 
-### 生成代码
+## 配置说明
 
-```bash
-# 生成依赖注入代码
-make wire
-
-# 生成枚举代码
-make generate
-
-# 注意：已移除 protobuf，使用标准 HTTP 接口
-```
-
-### 构建和运行
-
-```bash
-# 构建项目
-make build
-
-# 运行项目
-make run
-
-# 或者直接运行
-go run cmd/main.go -c config/app.yaml -p 8081 -v
-```
-
-## 🔧 配置说明
-
-### 应用配置 (config/app.yaml)
+应用配置位于 `config/app.yaml`，支持 `${ENV_NAME}` 占位符。关键字段如下：
 
 ```yaml
-verbose: true
+verbose: true          # 控制 Gin 模式与日志输出
 env: "local"
 app:
   name: "go-web-template"
-  port: 8081
-  web: "./web"
-  secret: "${APP_SECRET}"
-  admin_user: "${APP_ADMIN_USER}"
-  admin_pass: "${APP_ADMIN_PASS}"
-  debug: true
+  port: 8090           # 启动端口（Makefile 运行时会覆盖为 8090）
+  web: "./web"         # 静态资源目录
+  debug: true          # 影响内部调试开关
   log_level: "debug"
   log_file: "./log/app.log"
 db:
-  host: "localhost"
-  port: 3306
-  user: "root"
-  pass: "${DB_PASS}"
-  db: "mytest_db"
-  max_open_conns: 100
-  max_idle_conns: 10
-  conn_max_lifetime: "1h"
+  path: "./data/app.db"
+  debug: false
 jwt:
   secret: "${JWT_SECRET}"
   expire_time: "24h"
   issuer: "go-web-template"
 ```
 
-## 📡 API 接口
+> 注意：`db` 配置中的连接池参数目前未使用，如需扩展可在 `internal/database` 中补充。
 
-### 基础 API
+## 数据库与默认账户
 
-- `GET /` - 首页
-- `GET /admin/` - 管理后台首页
-- `GET /admin/login` - 管理后台登录页
+- 首次启动时会自动在 `db.path` 指定位置创建 SQLite 数据库，并执行数据表迁移。
+- 若不存在管理员账号，会初始化 `admin/admin`（固定盐值，仅用于开发演示）。请在生产环境启动后立即修改密码。
+- 密码以 HMAC-SHA256 + Salt 的方式存储。
 
-### API 接口
+## Web 界面与 API
 
-- `POST /api/login` - 用户登录
-- `GET /api/hello?name=World` - Hello 接口
-- `GET /api/image/{key}` - 获取图片
-- `POST /api/upload` - 上传图片
+### 页面
 
-### 管理接口
+- `GET /`：首页示例
+- `GET /login`：登录页
+- `GET /user/home`：用户中心（需要登录）
+- `GET /admin/home`：管理后台（需要管理员登录）
 
-- `POST /admin/login` - 管理员登录
-- `POST /admin/add_token` - 生成访问令牌
+### 认证流程
 
-## 🎛️ 管理后台
+- `POST /login`：使用 JSON (`username`/`password`) 登录，成功后下发 Cookie `jwt_token`
+- `POST /logout`：退出登录，清除 Cookie
+- `POST /auth/change_password`：修改密码，需 Cookie 鉴权
 
-访问 `http://localhost:8081/admin/` 进入管理后台：
+### API 端点
 
-- **用户管理** - 生成和管理用户访问令牌
-- **系统监控** - 查看系统状态和统计信息
-- **日志查看** - 查看系统日志
+| 模块   | 方法  | 路径                    | 说明                         | 鉴权方式                 |
+| ------ | ----- | ----------------------- | ---------------------------- | ------------------------ |
+| 用户   | POST  | `/user/generate_token`  | 生成自定义过期时间的 API Token | Cookie，角色 ≥ user      |
+| 管理   | GET   | `/admin/users`          | 查询用户列表                 | Cookie，角色 = admin     |
+| 管理   | POST  | `/admin/add_user`       | 新建用户                     | Cookie，角色 = admin     |
+| 管理   | DELETE | `/admin/delete_user`    | 删除用户                     | Cookie，角色 = admin     |
+| API    | GET   | `/api/hello?name=`      | 示例接口，返回数据库中的用户信息 | Bearer JWT，角色 ≥ user |
 
-默认管理员账号：
-- 用户名：`admin`
-- 密码：`admin123`
+Bearer Token 可以通过 `/user/generate_token` 获取，Cookie 由 `/login` 下发。
 
-## 🧪 测试
+`scripts/http/*.http` 提供了 VS Code REST Client 风格的调用示例，便于本地调试。
+
+## 后台任务
+
+`internal/job` 使用 `robfig/cron` 注册定时任务，示例 `HealthReporter` 每周六 23:40 触发健康报告生成。可在此基础上扩展业务任务。（如需停止或关闭，调用 `cron.Stop()` 并清理资源。）
+
+## 开发指南
+
+- **依赖注入**：在新增 service/repository/controller 后，记得将构造函数写入 `internal/setup/provider.go` 并执行 `make wire` 重新生成 `wire_gen.go`。
+- **枚举生成**：在枚举定义上添加 `//go:generate go-enum --marshal`，运行 `make generate` 即可生成 `<name>_enum.go`。
+- **控制器结构**：请求与响应结构定义在 `internal/controller/request` 与 `internal/controller/response`，详情见 `docs/API_STRUCTURE.md`。
+- **静态资源**：`web/` 内包含 HTML、CSS 与 JS 示例，Gin 会根据 `app.web` 路径加载模板与静态资源。
+- **工具链**：`tool/` 目录可存放自定义命令，使用 `make build-tools` 构建。
+
+## 测试
 
 ```bash
-# 运行所有测试
-make test
-
-# 运行特定包的测试
-go test ./internal/service/... -v
-
-# 运行测试并生成覆盖率报告
-go test ./... -cover
+make test               # 运行全部测试并输出覆盖率
+go test ./... -cover    # 自定义命令
 ```
 
-## 🐳 Docker 部署
+## 常用 Make 命令
 
-```bash
-# 构建 Docker 镜像
-make docker-build
+- `make help`：查看所有可用命令
+- `make init`：安装工具并生成代码
+- `make dev`：生成代码、构建并以开发模式运行
+- `make run`：构建后运行服务
+- `make clean`：清理构建产物与日志
 
-# 运行 Docker 容器
-make docker-run
-```
+## 许可证与贡献
 
-## 📝 开发指南
+- 许可证：MIT，详情见 `LICENSE`
+- 欢迎通过 Issue 或 Pull Request 反馈问题、贡献代码
 
-### 添加新的 API 接口
-
-1. 在 `internal/controller/request/` 中定义请求结构体
-2. 在 `internal/controller/response/` 中定义响应结构体
-3. 在控制器中实现 HTTP 处理函数
-4. 在 `RegisterRoutes` 方法中注册路由
-5. 使用 JWT 鉴权中间件
-
-### JWT 认证系统
-
-项目使用基于 JWT 的认证系统：
-
-- **Bearer Token**: 用于 API 认证，通过 `Authorization: Bearer <token>` 头传递
-- **Cookie 认证**: 用于 Web 界面认证，JWT token 存储在 cookie 中
-- **配置驱动**: JWT 密钥和过期时间从 `config/app.yaml` 读取
-- **角色管理**: 支持 `user` 和 `admin` 角色
-
-### SQLite 数据库
-
-项目使用 SQLite 数据库进行数据持久化：
-
-- **自动初始化**: 首次启动时自动创建数据库表和默认管理员账户
-- **默认账户**: 管理员账户 `admin/admin`，首次启动后请及时修改密码
-- **用户管理**: 支持用户注册、登录、密码修改等功能
-- **数据安全**: 密码使用哈希存储，确保数据安全
-
-#### 数据库配置
-
-```yaml
-db:
-  path: "./data/app.db"  # SQLite 数据库文件路径
-```
-
-#### 默认管理员账户
-
-- **用户名**: admin
-- **密码**: admin
-- **角色**: admin
-
-⚠️ **安全提醒**: 首次启动后请立即修改默认管理员密码！
-
-### 添加新的服务
-
-1. 在 `internal/service/` 中定义服务接口
-2. 实现服务逻辑
-3. 在 `internal/setup/` 中注册服务
-4. 运行 `make wire` 生成依赖注入代码
-
-### 添加新的数据模型
-
-1. 在 `internal/model/` 中定义模型
-2. 在 `internal/repository/` 中实现数据访问
-3. 在 `internal/service/` 中使用仓库
-
-## 🔍 故障排除
-
-### 常见问题
-
-1. **端口被占用**
-   ```bash
-   # 查看端口占用
-   lsof -i :8081
-   # 杀死进程
-   kill -9 <PID>
-   ```
-
-2. **依赖注入错误**
-   ```bash
-   # 重新生成 wire 代码
-   make wire
-   ```
-
-3. **前端资源问题**
-   ```bash
-   # 检查静态资源路径
-   ls -la web/static/
-   ```
-
-## 📄 许可证
-
-本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
-
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-## 📞 支持
-
-如有问题，请提交 Issue 或联系维护者。
+如需定制化或遇到问题，可先查阅日志与配置，仍无法解决时请联系维护者。祝使用愉快！
