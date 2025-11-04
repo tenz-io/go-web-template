@@ -1,10 +1,12 @@
-package model
+package db
 
 import (
 	"time"
 
 	"gorm.io/gorm"
 )
+
+const TableNameUser = "user"
 
 // User 用户模型
 type User struct {
@@ -19,21 +21,6 @@ type User struct {
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"` // 软删除
 }
 
-// CreateUserRequest 创建用户请求
-type CreateUserRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-	Role     int32  `json:"role" binding:"required"`
-}
-
-// UpdatePasswordRequest 更新密码请求
-type UpdatePasswordRequest struct {
-	OldPassword string `json:"old_password" binding:"required"`
-	NewPassword string `json:"new_password" binding:"required,min=6"`
-}
-
-// LoginRequest 登录请求
-type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+func (*User) TableName() string {
+	return TableNameUser
 }

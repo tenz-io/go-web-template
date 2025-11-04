@@ -10,7 +10,6 @@ import (
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
 	"go-web-template/internal/middleware"
-	"go-web-template/internal/model"
 	"go-web-template/internal/repository/dao"
 	"go-web-template/internal/service"
 )
@@ -67,7 +66,11 @@ func (ac *AuthController) Login(c *gin.Context) {
 	le.Debug("auth login")
 
 	// 验证用户凭据
-	userModel, err := ac.userService.VerifyUser(c.Request.Context(), req.Username, req.Password)
+	verifyParam := service.VerifyUserParam{
+		Username: req.Username,
+		Password: req.Password,
+	}
+	userModel, err := ac.userService.VerifyUser(c.Request.Context(), verifyParam)
 	if err != nil {
 		le.Warn("user login failed")
 		c.JSON(http.StatusOK, response.LoginResponse{
@@ -154,12 +157,12 @@ func (ac *AuthController) ChangePassword(c *gin.Context) {
 		return
 	}
 
-	updateReq := &model.UpdatePasswordRequest{
+	updateParam := service.UpdatePasswordParam{
 		OldPassword: req.OldPassword,
 		NewPassword: req.NewPassword,
 	}
 
-	if err := ac.userService.UpdatePassword(c.Request.Context(), userID, updateReq); err != nil {
+	if err := ac.userService.UpdatePassword(c.Request.Context(), userID, updateParam); err != nil {
 		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to update password")
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{

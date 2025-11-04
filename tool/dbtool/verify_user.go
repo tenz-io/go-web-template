@@ -52,7 +52,10 @@ func verifyUser(c *cmd.Context) error {
 	userDao := dao.NewUserDao(db)
 	userService := service.NewUserService(cfg, userDao)
 
-	_, err = userService.VerifyUser(c.Context, user, pass)
+	_, err = userService.VerifyUser(c.Context, service.VerifyUserParam{
+		Username: user,
+		Password: pass,
+	})
 	if err != nil {
 		return fmt.Errorf("verify user error: %w", err)
 	}

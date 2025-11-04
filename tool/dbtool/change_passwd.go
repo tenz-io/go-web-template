@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go-web-template/internal/model"
 
 	"github.com/tenz-io/gokit/cmd"
 
@@ -75,10 +74,11 @@ func changePasswd(c *cmd.Context) error {
 		return fmt.Errorf("get user error: %w", err)
 	}
 
-	err = userService.UpdatePassword(c.Context, userModel.ID, &model.UpdatePasswordRequest{
+	updatePassParam := service.UpdatePasswordParam{
 		OldPassword: oldPasswd,
 		NewPassword: newPasswd,
-	})
+	}
+	err = userService.UpdatePassword(c.Context, userModel.ID, updatePassParam)
 	if err != nil {
 		return fmt.Errorf("update password error: %w", err)
 

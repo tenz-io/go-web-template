@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	db2 "go-web-template/internal/model/db"
 	"go-web-template/internal/util"
 	"os"
 	"path/filepath"
@@ -13,7 +14,6 @@ import (
 
 	"go-web-template/internal/config"
 	"go-web-template/internal/constant"
-	"go-web-template/internal/model"
 )
 
 const (
@@ -88,14 +88,14 @@ func (db *DB) Close() error {
 // initTables 初始化数据库表
 func (db *DB) initTables() error {
 	// 自动迁移用户表
-	if err := db.conn.AutoMigrate(&model.User{}); err != nil {
+	if err := db.conn.AutoMigrate(&db2.User{}); err != nil {
 		return err
 	}
 
 	// 移除已废弃的邮箱列
 	migrator := db.conn.Migrator()
-	if migrator.HasColumn(&model.User{}, "email") {
-		if err := migrator.DropColumn(&model.User{}, "email"); err != nil {
+	if migrator.HasColumn(&db2.User{}, "email") {
+		if err := migrator.DropColumn(&db2.User{}, "email"); err != nil {
 			return err
 		}
 	}
@@ -115,7 +115,7 @@ func (db *DB) initTables() error {
 func (db *DB) initDefaultAdmin() error {
 	// 检查是否已存在管理员账户
 	var count int64
-	err := db.conn.Model(&model.User{}).Where("role = ?", constant.RoleAdmin).Count(&count).Error
+	err := db.conn.Model(&db2.User{}).Where("role = ?", constant.RoleAdmin).Count(&count).Error
 	if err != nil {
 		return err
 	}
@@ -129,7 +129,7 @@ func (db *DB) initDefaultAdmin() error {
 	initAdminPassHash := util.HashPasswordWithSalt(intiAdminPassword, initAdminSalt)
 
 	// 创建默认管理员账户
-	admin := &model.User{
+	admin := &db2.User{
 		Username: initAdminName,
 		Password: initAdminPassHash,
 		Salt:     initAdminSalt,

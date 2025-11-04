@@ -3,10 +3,7 @@ package dao
 import (
 	"context"
 	"errors"
-	"fmt"
-	"go-web-template/internal/util"
-
-	"go-web-template/internal/model"
+	"go-web-template/internal/model/db"
 
 	"gorm.io/gorm"
 )
@@ -14,19 +11,16 @@ import (
 // User 用户仓库接口
 type User interface {
 	// 基础查询
-	GetByName(ctx context.Context, name string) (*model.User, error)
-	GetByID(ctx context.Context, id int64) (*model.User, error)
+	GetByName(ctx context.Context, name string) (*db.User, error)
+	GetByID(ctx context.Context, id int64) (*db.User, error)
 
 	// 用户管理
-	Create(ctx context.Context, user *model.User) error
+	Create(ctx context.Context, user *db.User) error
 	UpdatePassword(ctx context.Context, userID int64, newPassword string) error
 	Delete(ctx context.Context, userID int64) error
 
-	// 认证
-	VerifyUser(ctx context.Context, username, password string) (*model.User, error)
-
 	// 列表查询
-	List(ctx context.Context, limit, offset int) ([]*model.User, error)
+	List(ctx context.Context, limit, offset int) ([]*db.User, error)
 	Count(ctx context.Context) (int64, error)
 }
 
@@ -41,8 +35,8 @@ func NewUserDao(db *gorm.DB) User {
 }
 
 // GetByName 根据用户名获取用户
-func (r *user) GetByName(ctx context.Context, name string) (*model.User, error) {
-	var userModel model.User
+func (r *user) GetByName(ctx context.Context, name string) (*db.User, error) {
+	var userModel db.User
 	err := r.db.WithContext(ctx).Where("username = ?", name).First(&userModel).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -54,8 +48,8 @@ func (r *user) GetByName(ctx context.Context, name string) (*model.User, error) 
 }
 
 // GetByID 根据ID获取用户
-func (r *user) GetByID(ctx context.Context, id int64) (*model.User, error) {
-	var userModel model.User
+func (r *user) GetByID(ctx context.Context, id int64) (*db.User, error) {
+	var userModel db.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&userModel).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -67,36 +61,20 @@ func (r *user) GetByID(ctx context.Context, id int64) (*model.User, error) {
 }
 
 // Create 创建用户
-func (r *user) Create(ctx context.Context, user *model.User) error {
+func (r *user) Create(ctx context.Context, user *db.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
 }
 
 // UpdatePassword 更新用户密码
 func (r *user) UpdatePassword(ctx context.Context, userID int64, newPassword string) error {
-	return r.db.WithContext(ctx).Model(&model.User{}).
+	return r.db.WithContext(ctx).Model(&db.User{}).
 		Where("id = ?", userID).
 		Update("password", newPassword).Error
 }
 
-// VerifyUser 验证用户凭据
-func (r *user) VerifyUser(ctx context.Context, username, password string) (*model.User, error) {
-	userModel, err := r.GetByName(ctx, username)
-	if err != nil {
-		return nil, err
-	}
-
-	hashPass := util.HashPasswordWithSalt(password, userModel.Salt)
-
-	if userModel.Password != hashPass {
-		return nil, fmt.Errorf("invalid password")
-	}
-
-	return userModel, nil
-}
-
 // List 获取用户列表
-func (r *user) List(ctx context.Context, limit, offset int) ([]*model.User, error) {
-	var users []*model.User
+func (r *user) List(ctx context.Context, limit, offset int) ([]*db.User, error) {
+	var users []*db.User
 	err := r.db.WithContext(ctx).
 		Select("id, username, role, profile, created_at, updated_at").
 		Order("created_at DESC").
@@ -109,12 +87,12 @@ func (r *user) List(ctx context.Context, limit, offset int) ([]*model.User, erro
 // Count 获取用户总数
 func (r *user) Count(ctx context.Context) (int64, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&model.User{}).Count(&count).Error
+	err := r.db.WithContext(ctx).Model(&db.User{}).Count(&count).Error
 	return count, err
 }
 
 // Delete 删除用户
 func (r *user) Delete(ctx context.Context, userID int64) error {
-	err := r.db.WithContext(ctx).Delete(&model.User{}, userID).Error
+	err := r.db.WithContext(ctx).Delete(&db.User{}, userID).Error
 	return err
 }

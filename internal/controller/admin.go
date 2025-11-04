@@ -10,7 +10,6 @@ import (
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
 	"go-web-template/internal/middleware"
-	"go-web-template/internal/model"
 	"go-web-template/internal/service"
 )
 
@@ -113,11 +112,12 @@ func (a *AdminController) AddUser(c *gin.Context) {
 	}
 
 	// 创建用户
-	user, err := a.userService.Register(c.Request.Context(), &model.CreateUserRequest{
+	createParam := service.CreateUserParam{
 		Username: req.Username,
 		Password: req.Password,
 		Role:     int32(role),
-	})
+	}
+	user, err := a.userService.CreateUser(c.Request.Context(), createParam)
 	if err != nil {
 		le.Error("failed to create user")
 		c.JSON(http.StatusOK, response.ErrorResponse{

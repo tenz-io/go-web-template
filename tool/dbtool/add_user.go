@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go-web-template/internal/model"
 
 	"github.com/tenz-io/gokit/cmd"
 
@@ -65,7 +64,7 @@ func addUser(c *cmd.Context) error {
 	userDao := dao.NewUserDao(db)
 	userService := service.NewUserService(cfg, userDao)
 
-	userModel, err := userService.Register(c.Context, &model.CreateUserRequest{
+	userModel, err := userService.CreateUser(c.Context, service.CreateUserParam{
 		Username: user,
 		Password: pass,
 		Role:     int32(role),
