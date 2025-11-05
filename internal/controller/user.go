@@ -30,15 +30,15 @@ func NewUserController(cfg *config.Config, userService service.User, jwtManager 
 }
 
 // RegisterRoutes 注册用户侧路由
-func (u *UserController) RegisterRoutes(r *gin.RouterGroup) {
+func (uc *UserController) RegisterRoutes(r *gin.RouterGroup) {
 	// 页面
-	r.GET("/home", u.home)
+	r.GET("/home", uc.home)
 
 	// API
-	r.POST("/generate_token", u.generateToken)
+	r.POST("/generate_token", uc.generateToken)
 }
 
-func (u *UserController) home(c *gin.Context) {
+func (uc *UserController) home(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	userID, _, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
@@ -47,7 +47,7 @@ func (u *UserController) home(c *gin.Context) {
 		return
 	}
 
-	userModel, err := u.userService.GetUser(c.Request.Context(), userID)
+	userModel, err := uc.userService.GetUser(c.Request.Context(), userID)
 	if err != nil {
 		le.WithError(err).Error("failed to get user model")
 		c.Redirect(http.StatusFound, "/login")
@@ -57,8 +57,8 @@ func (u *UserController) home(c *gin.Context) {
 	role := constant.Role(userModel.Role)
 
 	c.HTML(http.StatusOK, "home.html", gin.H{
-		"appName":     u.appName,
-		"name":        u.appName,
+		"appName":     uc.appName,
+		"name":        uc.appName,
 		"username":    userModel.Username,
 		"displayName": userModel.Username,
 		"role":        role.String(),
@@ -67,7 +67,7 @@ func (u *UserController) home(c *gin.Context) {
 }
 
 // generateToken 用户生成 API Token（JWT 格式）
-func (u *UserController) generateToken(c *gin.Context) {
+func (uc *UserController) generateToken(c *gin.Context) {
 	var req request.UserGenerateTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -105,7 +105,7 @@ func (u *UserController) generateToken(c *gin.Context) {
 
 	expDuration := time.Duration(expireHours) * time.Hour
 
-	token, err := u.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
+	token, err := uc.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
 	if err != nil {
 		le.WithError(err).Error("failed to generate token")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

@@ -30,24 +30,24 @@ type User interface {
 
 func NewUserService(
 	cfg *config.Config,
-	userRepo dao.User,
+	userDao dao.User,
 ) User {
 	return &user{
-		cfg:      cfg,
-		userRepo: userRepo,
+		cfg:     cfg,
+		userDao: userDao,
 	}
 }
 
 type user struct {
-	cfg      *config.Config
-	userRepo dao.User
+	cfg     *config.Config
+	userDao dao.User
 }
 
 // VerifyUser 验证用户凭据
 func (u *user) VerifyUser(ctx context.Context, param VerifyUserParam) (*db.User, error) {
 	le := logger.FromContext(ctx).WithField("username", param.Username)
 
-	userModel, err := u.userRepo.GetByName(ctx, param.Username)
+	userModel, err := u.userDao.GetByName(ctx, param.Username)
 	if err != nil {
 		le.Info("user not found")
 		return nil, err
@@ -69,7 +69,7 @@ func (u *user) CreateUser(ctx context.Context, param CreateUserParam) (*db.User,
 	le := logger.FromContext(ctx)
 
 	// 检查用户名是否已存在
-	_, err := u.userRepo.GetByName(ctx, param.Username)
+	_, err := u.userDao.GetByName(ctx, param.Username)
 	if err == nil {
 		return nil, fmt.Errorf("username already exists")
 	}
@@ -93,7 +93,7 @@ func (u *user) CreateUser(ctx context.Context, param CreateUserParam) (*db.User,
 		Profile:  "",
 	}
 
-	err = u.userRepo.Create(ctx, userModel)
+	err = u.userDao.Create(ctx, userModel)
 	if err != nil {
 		le.Error("failed to create user")
 		return nil, err
@@ -108,7 +108,7 @@ func (u *user) UpdatePassword(ctx context.Context, userID int64, param UpdatePas
 	le := logger.FromContext(ctx)
 
 	// 获取用户信息
-	userModel, err := u.userRepo.GetByID(ctx, userID)
+	userModel, err := u.userDao.GetByID(ctx, userID)
 	if err != nil {
 		return err
 	}
@@ -125,7 +125,7 @@ func (u *user) UpdatePassword(ctx context.Context, userID int64, param UpdatePas
 	hashedNewPass := util.HashPasswordWithSalt(param.NewPassword, userModel.Salt)
 
 	// 更新密码
-	err = u.userRepo.UpdatePassword(ctx, userID, hashedNewPass)
+	err = u.userDao.UpdatePassword(ctx, userID, hashedNewPass)
 	if err != nil {
 		le.Error("failed to update password")
 		return err
@@ -137,17 +137,17 @@ func (u *user) UpdatePassword(ctx context.Context, userID int64, param UpdatePas
 
 // GetUser 获取用户信息
 func (u *user) GetUser(ctx context.Context, userID int64) (*db.User, error) {
-	return u.userRepo.GetByID(ctx, userID)
+	return u.userDao.GetByID(ctx, userID)
 }
 
 // ListUsers 获取用户列表
 func (u *user) ListUsers(ctx context.Context, limit, offset int) ([]*db.User, int64, error) {
-	users, err := u.userRepo.List(ctx, limit, offset)
+	users, err := u.userDao.List(ctx, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	total, err := u.userRepo.Count(ctx)
+	total, err := u.userDao.Count(ctx)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -160,7 +160,7 @@ func (u *user) DeleteUser(ctx context.Context, userID int64) error {
 	le := logger.FromContext(ctx).WithField("userID", userID)
 
 	// 调用 repository 删除用户
-	err := u.userRepo.Delete(ctx, userID)
+	err := u.userDao.Delete(ctx, userID)
 	if err != nil {
 		le.Error("failed to delete user")
 		return err

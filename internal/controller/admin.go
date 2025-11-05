@@ -29,14 +29,14 @@ func NewAdminController(cfg *config.Config, userService service.User, jwtManager
 }
 
 // 注册管理路由
-func (a *AdminController) RegisterRoutes(r *gin.RouterGroup) {
-	r.GET("/home", a.home)
-	r.GET("/users", a.GetUsers)
-	r.POST("/add_user", a.AddUser)
-	r.DELETE("/delete_user", a.DeleteUser)
+func (ac *AdminController) RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/home", ac.home)
+	r.GET("/users", ac.GetUsers)
+	r.POST("/add_user", ac.AddUser)
+	r.DELETE("/delete_user", ac.DeleteUser)
 }
 
-func (a *AdminController) home(c *gin.Context) {
+func (ac *AdminController) home(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 
 	userID, _, err := middleware.GetUserInfoFromContext(c)
@@ -46,7 +46,7 @@ func (a *AdminController) home(c *gin.Context) {
 		return
 	}
 
-	userModel, err := a.userService.GetUser(c.Request.Context(), userID)
+	userModel, err := ac.userService.GetUser(c.Request.Context(), userID)
 	if err != nil {
 		le.WithError(err).Error("failed to get user model")
 		c.Redirect(http.StatusFound, "/login")
@@ -56,8 +56,8 @@ func (a *AdminController) home(c *gin.Context) {
 	role := constant.Role(userModel.Role)
 
 	c.HTML(http.StatusOK, "home.html", gin.H{
-		"appName":     a.appName,
-		"name":        a.appName,
+		"appName":     ac.appName,
+		"name":        ac.appName,
 		"username":    userModel.Username,
 		"displayName": userModel.Username,
 		"role":        role.String(),
@@ -66,7 +66,7 @@ func (a *AdminController) home(c *gin.Context) {
 }
 
 // GetUsers 获取用户列表
-func (a *AdminController) GetUsers(c *gin.Context) {
+func (ac *AdminController) GetUsers(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	le.Debug("admin get users called")
 
@@ -75,7 +75,7 @@ func (a *AdminController) GetUsers(c *gin.Context) {
 	offset := 0
 
 	// 获取用户列表
-	users, total, err := a.userService.ListUsers(c.Request.Context(), limit, offset)
+	users, total, err := ac.userService.ListUsers(c.Request.Context(), limit, offset)
 	if err != nil {
 		le.Error("failed to get users")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
@@ -111,7 +111,7 @@ func (a *AdminController) GetUsers(c *gin.Context) {
 }
 
 // AddUser 添加用户
-func (a *AdminController) AddUser(c *gin.Context) {
+func (ac *AdminController) AddUser(c *gin.Context) {
 	var req request.AdminAddUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -145,7 +145,7 @@ func (a *AdminController) AddUser(c *gin.Context) {
 		Password: req.Password,
 		Role:     int32(role),
 	}
-	user, err := a.userService.CreateUser(c.Request.Context(), createParam)
+	user, err := ac.userService.CreateUser(c.Request.Context(), createParam)
 	if err != nil {
 		le.Error("failed to create user")
 		c.JSON(http.StatusOK, response.ErrorResponse{
@@ -168,7 +168,7 @@ func (a *AdminController) AddUser(c *gin.Context) {
 }
 
 // DeleteUser 删除用户
-func (a *AdminController) DeleteUser(c *gin.Context) {
+func (ac *AdminController) DeleteUser(c *gin.Context) {
 	var req request.AdminDeleteUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -184,7 +184,7 @@ func (a *AdminController) DeleteUser(c *gin.Context) {
 	le.Debug("admin delete user called")
 
 	// 删除用户
-	err := a.userService.DeleteUser(c.Request.Context(), req.UserID)
+	err := ac.userService.DeleteUser(c.Request.Context(), req.UserID)
 	if err != nil {
 		le.Error("failed to delete user")
 		c.JSON(http.StatusOK, response.ErrorResponse{

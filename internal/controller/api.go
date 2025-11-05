@@ -25,12 +25,12 @@ func NewApiController(userRepo dao.User, jwtManager *middleware.JWTManager) *Api
 }
 
 // 注册 API 路由
-func (as *ApiController) RegisterRoutes(r *gin.RouterGroup) {
-	r.GET("/hello", as.Hello)
+func (ac *ApiController) RegisterRoutes(r *gin.RouterGroup) {
+	r.GET("/hello", ac.Hello)
 }
 
 // Hello 接口
-func (as *ApiController) Hello(c *gin.Context) {
+func (ac *ApiController) Hello(c *gin.Context) {
 	var req request.HelloRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
@@ -45,7 +45,7 @@ func (as *ApiController) Hello(c *gin.Context) {
 	le := logger.FromContext(c.Request.Context())
 	le.Debug("hello called")
 
-	user, err := as.userRepo.GetByName(c.Request.Context(), req.Name)
+	user, err := ac.userRepo.GetByName(c.Request.Context(), req.Name)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
