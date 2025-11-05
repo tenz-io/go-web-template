@@ -93,6 +93,6 @@ func (r *user) Count(ctx context.Context) (int64, error) {
 
 // Delete 删除用户
 func (r *user) Delete(ctx context.Context, userID int64) error {
-	err := r.db.WithContext(ctx).Delete(&db.User{}, userID).Error
+	err := r.db.WithContext(ctx).Unscoped().Delete(&db.User{}, userID).Error
 	return err
 }
