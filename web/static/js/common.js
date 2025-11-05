@@ -3,11 +3,7 @@
  */
 
 // 全局配置
-const AppConfig = {
-    apiBaseUrl: '',
-    tokenKey: 'user_token',
-    cookieName: 'jwt_token'
-};
+const AppConfig = {};
 
 // 工具函数
 const Utils = {
@@ -76,23 +72,6 @@ const Utils = {
 
     /**
      * 获取Token
-     */
-    getToken: function () {
-        const token = localStorage.getItem(AppConfig.tokenKey);
-        return token ? token.trim() : '';
-    },
-
-
-    /**
-     * 清除Token
-     */
-    clearToken: function () {
-        localStorage.removeItem(AppConfig.tokenKey);
-    },
-
-    /**
-     * 复制文本到剪贴板
-     * @param {string} text - 要复制的文本
      */
     copyToClipboard: function (text) {
         if (navigator.clipboard) {
@@ -184,10 +163,6 @@ const API = {
             'Content-Type': 'application/json'
         };
 
-        if (Utils.getToken()) {
-            defaultHeaders['Authorization'] = `Bearer ${Utils.getToken()}`;
-        }
-
         const response = await fetch(url, {
             method: 'GET',
             headers: {...defaultHeaders, ...headers},
@@ -207,10 +182,6 @@ const API = {
         const defaultHeaders = {
             'Content-Type': 'application/json'
         };
-
-        if (Utils.getToken()) {
-            defaultHeaders['Authorization'] = `Bearer ${Utils.getToken()}`;
-        }
 
         const response = await fetch(url, {
             method: 'POST',
@@ -232,10 +203,6 @@ const API = {
         const defaultHeaders = {
             'Content-Type': 'application/json'
         };
-
-        if (Utils.getToken()) {
-            defaultHeaders['Authorization'] = `Bearer ${Utils.getToken()}`;
-        }
 
         const response = await fetch(url, {
             method: 'DELETE',

@@ -468,7 +468,6 @@ const HomePage = {
         if (!confirm('确定要退出登录吗？')) {
             return;
         }
-        Utils.clearToken();
         API.post('/logout', {}).finally(() => {
             window.location.href = '/login';
         });
