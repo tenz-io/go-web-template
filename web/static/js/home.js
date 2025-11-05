@@ -59,16 +59,6 @@ const HomePage = {
             $changePasswordForm.on('submit', this.handleChangePassword.bind(this));
         }
 
-        const $searchInput = $('#searchInput');
-        if ($searchInput.length) {
-            $searchInput.on('input', this.debounce(this.searchUsers.bind(this), 500));
-        }
-
-        const $roleFilter = $('#roleFilter');
-        if ($roleFilter.length) {
-            $roleFilter.on('change', this.filterUsers.bind(this));
-        }
-
         $(document).on('click', (e) => {
             if (!$(e.target).closest('.user-dropdown').length) {
                 $('#userDropdownMenu').removeClass('show');
@@ -214,14 +204,9 @@ const HomePage = {
                     <td><span class="badge bg-success">活跃</span></td>
                     <td>${Utils.formatDate(user.created_at)}</td>
                     <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="HomePage.editUser(${user.id})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="btn btn-outline-danger" onclick="HomePage.deleteUser(${user.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="HomePage.deleteUser(${user.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </td>
                 </tr>
             `;
@@ -329,9 +314,9 @@ const HomePage = {
     async generateToken() {
         const form = $('#generateTokenForm')[0];
         const formData = new FormData(form);
-        const expire = parseInt(formData.get('expire'), 10);
+        const expireHours = parseInt(formData.get('expire_hours'), 10);
 
-        if (!Number.isFinite(expire) || expire <= 0) {
+        if (!Number.isFinite(expireHours) || expireHours <= 0) {
             Utils.showAlert('请选择有效的过期时间', 'warning');
             return;
         }
@@ -340,7 +325,7 @@ const HomePage = {
 
         try {
             Utils.showLoading(true, submitSelector);
-            const response = await API.post('/user/generate_token', { expire });
+            const response = await API.post('/user/generate_token', { expire_hours: expireHours });
 
             if (response.code === 0 && response.token) {
                 $('#generatedToken').val(response.token);
@@ -431,30 +416,6 @@ const HomePage = {
         Utils.showAlert('当前版本仅支持临时 Token，无需删除。', 'info');
     },
 
-    searchUsers() {
-        if (this.userRole !== 'admin') {
-            return;
-        }
-        const keyword = $('#searchInput').val();
-        console.debug('搜索用户:', keyword);
-    },
-
-    filterUsers() {
-        if (this.userRole !== 'admin') {
-            return;
-        }
-        const role = $('#roleFilter').val();
-        console.debug('筛选角色:', role);
-    },
-
-    refreshUsers() {
-        this.loadUsers();
-    },
-
-    editUser() {
-        Utils.showAlert('编辑功能开发中...', 'info');
-    },
-
     copyToken() {
         const token = $('#generatedToken').val();
         if (!token) {
@@ -473,14 +434,6 @@ const HomePage = {
         API.post('/logout', {}).finally(() => {
             window.location.href = '/login';
         });
-    },
-
-    debounce(func, wait) {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
     },
 };
 

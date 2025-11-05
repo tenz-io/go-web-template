@@ -240,9 +240,10 @@ func GetUserInfoFromContext(c *gin.Context) (userID int64, role int32, err error
 
 // Cookie 认证（通用）
 func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role) {
+	le := logger.FromContext(c.Request.Context())
 	token, err := c.Cookie(JWTTokenCookieName)
 	if err != nil {
-		logger.FromContext(c.Request.Context()).Warn("JWT cookie auth failed")
+		le.Warn("JWT cookie auth failed")
 		c.Redirect(http.StatusTemporaryRedirect, "/login")
 		c.Abort()
 		return
@@ -250,14 +251,16 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 
 	claims, err := jwtManager.ValidateToken(token)
 	if err != nil {
-		logger.FromContext(c.Request.Context()).Warn("JWT validation failed")
+		le.Warn("JWT validation failed")
 		c.Redirect(http.StatusTemporaryRedirect, "/login")
 		c.Abort()
 		return
 	}
 
 	// 检查角色权限
-	if role == constant.RoleAdmin {
+
+	switch role {
+	case constant.RoleAdmin:
 		// 管理员权限：必须是管理员角色
 		if claims.Role != int32(constant.RoleAdmin) {
 			logger.FromContext(c.Request.Context()).Warn("Admin authentication failed: insufficient role")
@@ -265,9 +268,8 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 			c.Abort()
 			return
 		}
-	} else if role == constant.RoleUser {
-		// 普通用户权限：可以是任何有效用户
-		// 这里不需要额外检查，因为已经验证了 JWT token
+	default:
+		//ignore
 	}
 
 	// 设置用户信息到上下文

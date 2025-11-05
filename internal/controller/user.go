@@ -94,16 +94,16 @@ func (u *UserController) generateToken(c *gin.Context) {
 		return
 	}
 
-	expireSeconds := req.Expire
-	if expireSeconds <= 0 {
-		expireSeconds = 3600
+	expireHours := req.ExpireHours
+	if expireHours <= 0 {
+		expireHours = 1
 	}
 
-	if expireSeconds < 60 {
-		expireSeconds = 60
+	if expireHours > 24*365*5 {
+		expireHours = 24 * 365 * 5
 	}
 
-	expDuration := time.Duration(expireSeconds) * time.Second
+	expDuration := time.Duration(expireHours) * time.Hour
 
 	token, err := u.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
 	if err != nil {

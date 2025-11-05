@@ -10,11 +10,8 @@ app:
 db:
   path: "./data/app.db"
   debug: false
-  max_open_conns: 100
-  max_idle_conns: 10
-  conn_max_lifetime: "1h"
 jwt:
   secret: "${JWT_SECRET}"
-  expire_time: "24h"
+  expire_time: "15m"
   issuer: "go-web-template"
 

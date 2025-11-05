@@ -4,5 +4,5 @@ package request
 
 // UserGenerateTokenRequest 用户生成API token请求
 type UserGenerateTokenRequest struct {
-	Expire int `json:"expire" binding:"required,min=1"` // 过期时间（秒）
+	ExpireHours int `json:"expire_hours" binding:"required,min=1"` // 过期时间（小时）
 }
