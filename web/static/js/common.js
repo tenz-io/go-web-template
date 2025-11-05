@@ -25,16 +25,21 @@ const Utils = {
             </div>
         `;
 
-        // 移除现有的提示
-        $('.alert').remove();
+        const $container = $('.page-feedback:visible, .main-content:visible, .login-body:visible').first();
+        let $alert;
 
-        // 添加新提示到页面顶部
-        $('.main-content, .login-body').first().prepend(alertHtml);
+        if ($container.length) {
+            $container.find('.alert').remove();
+            $alert = $(alertHtml);
+            $container.prepend($alert);
+        } else {
+            $alert = $(alertHtml);
+            $('body').prepend($alert);
+        }
 
-        // 自动消失
         if (duration > 0) {
             setTimeout(() => {
-                $('.alert').fadeOut();
+                $alert.fadeOut(() => $alert.remove());
             }, duration);
         }
     },
@@ -133,6 +138,37 @@ const Utils = {
             .replace('HH', hours)
             .replace('mm', minutes)
             .replace('ss', seconds);
+    },
+
+    /**
+     * 在指定容器中显示提示信息
+     * @param {string} selector - 目标元素选择器
+     * @param {string} message - 提示信息
+     * @param {string} type - 提示类型 (success, danger, warning, info)
+     */
+    inlineFeedback: function (selector, message = '', type = 'info') {
+        const $target = $(selector);
+        if (!$target.length) {
+            if (message) {
+                this.showAlert(message, type);
+            }
+            return;
+        }
+
+        const alertClasses = ['alert-info', 'alert-success', 'alert-warning', 'alert-danger'];
+        $target.removeClass(['alert', 'd-none', ...alertClasses].join(' '));
+
+        if (!message) {
+            $target.addClass('d-none').empty();
+            return;
+        }
+
+        const icon = this.getAlertIcon(type);
+        $target
+            .addClass(`alert alert-${type}`)
+            .attr('role', 'alert')
+            .html(`<i class="fas fa-${icon} me-2"></i>${message}`)
+            .removeClass('d-none');
     }
 };
 

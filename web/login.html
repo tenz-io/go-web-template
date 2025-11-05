@@ -168,13 +168,15 @@
     </nav>
 
     <!-- 登录表单 -->
-    <div class="login-container">
+    <div class="login-container login-body">
         <div class="login-header">
             <h1 class="login-title">
                 <i class="fas fa-sign-in-alt"></i> 用户登录
             </h1>
             <p class="login-subtitle">请输入您的用户名和密码</p>
         </div>
+
+        <div id="loginStatus" class="alert d-none mb-3" role="alert"></div>
 
         <form id="loginForm" novalidate>
             <div class="form-group">

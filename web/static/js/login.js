@@ -2,6 +2,34 @@
  * 登录页面JavaScript
  */
 
+if (typeof Utils.inlineFeedback !== 'function') {
+    Utils.inlineFeedback = function (selector, message = '', type = 'info') {
+        const $target = $(selector);
+        if (!$target.length) {
+            if (message) {
+                Utils.showAlert(message, type);
+            }
+            return;
+        }
+
+        $target.removeClass('alert alert-info alert-success alert-warning alert-danger d-none');
+
+        if (!message) {
+            $target.addClass('d-none').empty();
+            return;
+        }
+
+        const icon = typeof Utils.getAlertIcon === 'function' ? Utils.getAlertIcon(type) : null;
+        const content = icon ? `<i class="fas fa-${icon} me-2"></i>${message}` : message;
+
+        $target
+            .addClass(`alert alert-${type}`)
+            .attr('role', 'alert')
+            .html(content)
+            .removeClass('d-none');
+    };
+}
+
 // 登录页面功能
 const LoginPage = {
     /**
@@ -88,7 +116,7 @@ const LoginPage = {
      * @param {Object} result - 登录结果
      */
     handleLoginSuccess: function (result) {
-        Utils.showAlert('登录成功，正在跳转...', 'success');
+        this.showStatus('登录成功，正在跳转...', 'success');
 
         // 根据角色跳转
         setTimeout(() => {
@@ -101,7 +129,7 @@ const LoginPage = {
      * @param {string} message - 错误信息
      */
     handleLoginError: function (message) {
-        Utils.showAlert('登录失败: ' + message, 'danger');
+        this.showStatus('登录失败：' + (message || '请稍后重试'), 'danger');
     },
 
     /**
@@ -182,7 +210,7 @@ const LoginPage = {
      * 隐藏提示信息
      */
     hideAlert: function () {
-        $('.alert').remove();
+        this.showStatus();
     },
 
     /**
@@ -195,6 +223,15 @@ const LoginPage = {
         } else {
             window.location.href = '/';
         }
+    },
+
+    /**
+     * 显示状态提示
+     * @param {string} message
+     * @param {string} type
+     */
+    showStatus: function (message = '', type = 'info') {
+        Utils.inlineFeedback('#loginStatus', message, type);
     },
 
     /**

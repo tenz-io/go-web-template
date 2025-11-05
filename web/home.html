@@ -209,6 +209,8 @@
                 </nav>
 
                 <div class="container-fluid pb-4">
+                    <div class="page-feedback mb-3" id="pageFeedback"></div>
+
                     <section id="dashboard" class="tab-content">
                         <div class="row g-4 mb-4">
                             <div class="col-12 col-sm-6 col-xl-3">
@@ -332,15 +334,17 @@
                                             </div>
                                         </div>
                                         <form id="generateTokenForm">
+                                            <div class="alert d-none mb-3" id="generateTokenFeedback" role="alert"></div>
                                             <div class="mb-3">
-                                                <label for="tokenExpireHours" class="form-label">有效期</label>
+                                                <label for="tokenExpireHours" class="form-label">有效期（小时）</label>
                                                 <select class="form-select" id="tokenExpireHours" name="expire_hours">
                                                     <option value="1">1 小时</option>
-                                                    <option value="24">1 天</option>
-                                                    <option value="168">7 天</option>
-                                                    <option value="720">1 月</option>
-                                                    <option value="4320">6 月</option>
-                                                    <option value="8760">12 月</option>
+                                                    <option value="6">6 小时</option>
+                                                    <option value="24">24 小时 · 1 天</option>
+                                                    <option value="168">168 小时 · 7 天</option>
+                                                    <option value="720">720 小时 · 30 天</option>
+                                                    <option value="4320">4320 小时 · 180 天</option>
+                                                    <option value="8760">8760 小时 · 365 天</option>
                                                 </select>
                                             </div>
                                             <button type="submit" class="btn btn-primary">
@@ -415,6 +419,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert d-none mb-3" id="addUserFeedback" role="alert"></div>
                     <form id="addUserForm">
                         <div class="mb-3">
                             <label for="userUsername" class="form-label">用户名</label>
@@ -453,6 +458,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert d-none mb-3" id="changePasswordFeedback" role="alert"></div>
                     <form id="changePasswordForm">
                         <div class="mb-3">
                             <label for="oldPassword" class="form-label">旧密码</label>

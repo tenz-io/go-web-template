@@ -2,6 +2,34 @@
  * 统一的控制台脚本
  */
 
+if (typeof Utils.inlineFeedback !== 'function') {
+    Utils.inlineFeedback = function (selector, message = '', type = 'info') {
+        const $target = $(selector);
+        if (!$target.length) {
+            if (message) {
+                Utils.showAlert(message, type);
+            }
+            return;
+        }
+
+        $target.removeClass('alert alert-info alert-success alert-warning alert-danger d-none');
+
+        if (!message) {
+            $target.addClass('d-none').empty();
+            return;
+        }
+
+        const icon = typeof Utils.getAlertIcon === 'function' ? Utils.getAlertIcon(type) : null;
+        const content = icon ? `<i class="fas fa-${icon} me-2"></i>${message}` : message;
+
+        $target
+            .addClass(`alert alert-${type}`)
+            .attr('role', 'alert')
+            .html(content)
+            .removeClass('d-none');
+    };
+}
+
 const HomePage = {
     currentTab: 'dashboard',
     userRole: 'user',
@@ -255,6 +283,7 @@ const HomePage = {
     showChangePassword() {
         $('#userDropdownMenu').removeClass('show');
         $('#changePasswordForm')[0].reset();
+        Utils.inlineFeedback('#changePasswordFeedback');
         $('#changePasswordModal').modal('show');
     },
 
@@ -264,6 +293,7 @@ const HomePage = {
             return;
         }
         $('#addUserForm')[0].reset();
+        Utils.inlineFeedback('#addUserFeedback');
         $('#addUserModal').modal('show');
     },
 
@@ -281,8 +311,10 @@ const HomePage = {
             role: formData.get('role'),
         };
 
+        Utils.inlineFeedback('#addUserFeedback');
+
         if (!data.username || !data.password) {
-            Utils.showAlert('请填写完整信息', 'warning');
+            Utils.inlineFeedback('#addUserFeedback', '请填写完整信息', 'danger');
             return;
         }
 
@@ -293,14 +325,15 @@ const HomePage = {
             const response = await API.post('/admin/add_user', data);
             if (response.code === 0) {
                 Utils.showAlert('用户添加成功', 'success');
+                Utils.inlineFeedback('#addUserFeedback');
                 $('#addUserModal').modal('hide');
                 this.loadUsers();
             } else {
-                Utils.showAlert(`添加用户失败: ${response.message}`, 'danger');
+                Utils.inlineFeedback('#addUserFeedback', `添加用户失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('添加用户失败:', error);
-            Utils.showAlert('添加用户失败', 'danger');
+            Utils.inlineFeedback('#addUserFeedback', '添加用户失败，请稍后重试', 'danger');
         } finally {
             Utils.showLoading(false, submitSelector);
         }
@@ -316,8 +349,10 @@ const HomePage = {
         const formData = new FormData(form);
         const expireHours = parseInt(formData.get('expire_hours'), 10);
 
+        Utils.inlineFeedback('#generateTokenFeedback');
+
         if (!Number.isFinite(expireHours) || expireHours <= 0) {
-            Utils.showAlert('请选择有效的过期时间', 'warning');
+            Utils.inlineFeedback('#generateTokenFeedback', '请选择有效的过期时间', 'danger');
             return;
         }
 
@@ -331,14 +366,14 @@ const HomePage = {
                 $('#generatedToken').val(response.token);
                 $('#tokenResultPlaceholder').addClass('d-none');
                 $('#tokenResultRow').removeClass('d-none');
-                Utils.showAlert('Token 生成成功，请及时保存', 'success');
+                Utils.inlineFeedback('#generateTokenFeedback', 'Token 生成成功，请及时保存', 'success');
                 form.reset();
             } else {
-                Utils.showAlert(`生成 Token 失败: ${response.message || '未知错误'}`, 'danger');
+                Utils.inlineFeedback('#generateTokenFeedback', `生成 Token 失败: ${response.message || '未知错误'}`, 'danger');
             }
         } catch (error) {
             console.error('生成Token失败:', error);
-            Utils.showAlert('生成 Token 失败', 'danger');
+            Utils.inlineFeedback('#generateTokenFeedback', '生成 Token 失败，请稍后重试', 'danger');
         } finally {
             Utils.showLoading(false, submitSelector);
         }
@@ -358,8 +393,10 @@ const HomePage = {
         };
         const confirmPassword = $('#confirmPassword').val();
 
+        Utils.inlineFeedback('#changePasswordFeedback');
+
         if (data.new_password !== confirmPassword) {
-            Utils.showAlert('两次输入的新密码不一致', 'warning');
+            Utils.inlineFeedback('#changePasswordFeedback', '两次输入的新密码不一致', 'danger');
             return;
         }
 
@@ -372,12 +409,13 @@ const HomePage = {
                 Utils.showAlert('密码修改成功', 'success');
                 $('#changePasswordModal').modal('hide');
                 form.reset();
+                Utils.inlineFeedback('#changePasswordFeedback');
             } else {
-                Utils.showAlert(`密码修改失败: ${response.message}`, 'danger');
+                Utils.inlineFeedback('#changePasswordFeedback', `密码修改失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('密码修改失败:', error);
-            Utils.showAlert('密码修改失败', 'danger');
+            Utils.inlineFeedback('#changePasswordFeedback', '密码修改失败，请稍后重试', 'danger');
         } finally {
             Utils.showLoading(false, submitSelector);
         }
