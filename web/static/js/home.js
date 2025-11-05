@@ -1,109 +1,144 @@
 /**
- * 统一Home页面JavaScript
+ * 统一的控制台脚本
  */
 
-// Home页面功能
 const HomePage = {
     currentTab: 'dashboard',
-    userRole: 'user', // 从token中获取
-    userInfo: null,
-    
-    /**
-     * 初始化页面
-     */
-    init: function() {
-        this.bindEvents();
+    userRole: 'user',
+    userInfo: {},
+
+    init() {
         this.loadUserInfo();
+        this.bindEvents();
         this.setupMenu();
-        this.loadDashboard();
+        this.showTab(this.currentTab);
     },
 
-    /**
-     * 绑定事件
-     */
-    bindEvents: function() {
-        // 标签页切换
-        $('.nav-link[data-tab]').click((e) => {
+    loadUserInfo() {
+        const dataset = document.body.dataset || {};
+        const role = (dataset.role || '').toLowerCase();
+        const isAdmin = dataset.isAdmin === 'true' || role === 'admin';
+        const displayName = dataset.displayName || dataset.username || '用户';
+
+        this.userInfo = {
+            username: dataset.username || '',
+            displayName,
+            appName: dataset.appName || '',
+            role: isAdmin ? 'admin' : (role || 'user'),
+            isAdmin,
+        };
+        this.userRole = this.userInfo.role;
+
+        $('#userDisplayName').text(displayName);
+        $('#userRoleBadge').text(isAdmin ? '管理员' : '普通用户');
+
+        if (this.userInfo.appName) {
+            document.title = `${this.userInfo.appName} - 控制台`;
+        }
+    },
+
+    bindEvents() {
+        $('#sidebarMenu').on('click', '.nav-link[data-tab]', (e) => {
             e.preventDefault();
             const tab = $(e.currentTarget).data('tab');
             this.showTab(tab);
         });
 
-        // 表单提交
-        $('#addUserForm').submit(this.handleAddUser.bind(this));
-        $('#generateTokenForm').submit(this.handleGenerateToken.bind(this));
-        $('#changePasswordForm').submit(this.handleChangePassword.bind(this));
-        
-        // 搜索功能
-        $('#searchInput').on('input', this.debounce(this.searchUsers.bind(this), 500));
-        $('#roleFilter').change(this.filterUsers.bind(this));
-        
-        // 点击外部关闭下拉菜单
-        $(document).click((e) => {
+        const $addUserForm = $('#addUserForm');
+        if ($addUserForm.length) {
+            $addUserForm.on('submit', this.handleAddUser.bind(this));
+        }
+
+        const $generateTokenForm = $('#generateTokenForm');
+        if ($generateTokenForm.length) {
+            $generateTokenForm.on('submit', this.handleGenerateToken.bind(this));
+        }
+
+        const $changePasswordForm = $('#changePasswordForm');
+        if ($changePasswordForm.length) {
+            $changePasswordForm.on('submit', this.handleChangePassword.bind(this));
+        }
+
+        const $searchInput = $('#searchInput');
+        if ($searchInput.length) {
+            $searchInput.on('input', this.debounce(this.searchUsers.bind(this), 500));
+        }
+
+        const $roleFilter = $('#roleFilter');
+        if ($roleFilter.length) {
+            $roleFilter.on('change', this.filterUsers.bind(this));
+        }
+
+        $(document).on('click', (e) => {
             if (!$(e.target).closest('.user-dropdown').length) {
                 $('#userDropdownMenu').removeClass('show');
             }
         });
     },
 
-    /**
-     * 加载用户信息
-     */
-    loadUserInfo: async function() {
-        try {
-            const token = Utils.getToken();
-            if (!token) {
-                window.location.href = '/';
-                return;
+    setupMenu() {
+        $('#sidebarMenu [data-visible-for]').each((_, element) => {
+            const $element = $(element);
+            const visibleFor = ($element.data('visible-for') || 'all').toString();
+            const canShow = this.canDisplay(visibleFor);
+            $element.toggle(canShow);
+            if (!canShow) {
+                $element.removeClass('active');
             }
-            
-            // 从token中解析用户信息（这里简化处理）
-            this.userInfo = {
-                username: '当前用户',
-                role: 'user' // 实际应该从JWT token中解析
-            };
-            
-            this.userRole = this.userInfo.role;
-            $('#userDisplayName').text(this.userInfo.username);
-            
-        } catch (error) {
-            console.error('加载用户信息失败:', error);
-            Utils.showAlert('加载用户信息失败', 'danger');
-        }
-    },
+        });
 
-    /**
-     * 设置菜单显示
-     */
-    setupMenu: function() {
-        if (this.userRole === 'admin') {
-            $('#adminMenu').show();
-            $('#userMenu').hide();
+        $('[data-role="admin"]').toggle(this.userRole === 'admin');
+
+        if (this.userRole !== 'admin' && this.currentTab === 'users') {
+            this.currentTab = 'dashboard';
+        }
+
+        const $active = $('#sidebarMenu .nav-link.active:visible');
+        if (!$active.length) {
+            const fallback = $('#sidebarMenu .nav-link[data-tab]:visible').first().data('tab') || 'dashboard';
+            this.currentTab = fallback;
         } else {
-            $('#adminMenu').hide();
-            $('#userMenu').show();
+            this.currentTab = $active.data('tab') || this.currentTab;
         }
     },
 
-    /**
-     * 显示指定标签页
-     * @param {string} tabName - 标签页名称
-     */
-    showTab: function(tabName) {
-        // 隐藏所有标签页内容
+    canDisplay(visibleFor) {
+        if (!visibleFor || visibleFor === 'all') {
+            return true;
+        }
+
+        const role = this.userRole;
+        const tokens = visibleFor.split(',').map((item) => item.trim().toLowerCase());
+
+        if (tokens.includes('admin')) {
+            return role === 'admin';
+        }
+
+        if (tokens.includes('user')) {
+            return role !== 'admin';
+        }
+
+        return tokens.includes(role);
+    },
+
+    showTab(tabName) {
+        const $targetLink = $(`.nav-link[data-tab="${tabName}"]`);
+        if (!$targetLink.length || !$targetLink.is(':visible')) {
+            const fallback = $('#sidebarMenu .nav-link[data-tab]:visible').first().data('tab') || 'dashboard';
+            if (fallback && fallback !== tabName) {
+                this.showTab(fallback);
+            }
+            return;
+        }
+
         $('.tab-content').hide();
-        
-        // 显示指定标签页
-        $('#' + tabName).show();
-        
-        // 更新导航状态
-        $('.nav-link').removeClass('active');
-        $(`.nav-link[data-tab="${tabName}"]`).addClass('active');
-        
+        $(`#${tabName}`).show();
+        $('#sidebarMenu .nav-link').removeClass('active');
+        $targetLink.addClass('active');
         this.currentTab = tabName;
-        
-        // 根据标签页加载相应数据
-        switch(tabName) {
+        this.updatePageTitle(tabName);
+
+        switch (tabName) {
             case 'dashboard':
                 this.loadDashboard();
                 break;
@@ -113,41 +148,46 @@ const HomePage = {
             case 'tokens':
                 this.loadTokens();
                 break;
+            default:
+                break;
         }
     },
 
-    /**
-     * 加载仪表盘数据
-     */
-    loadDashboard: async function() {
+    updatePageTitle(tabName) {
+        const $nav = $(`.nav-link[data-tab="${tabName}"]`);
+        if ($nav.length) {
+            const text = $.trim($nav.text());
+            $('#pageTitle').text(text || '仪表盘');
+        }
+    },
+
+    async loadDashboard() {
         try {
-            // 模拟数据，实际应该从API获取
             $('#totalUsers').text('12');
             $('#activeUsers').text('8');
             $('#tokenCount').text('5');
             $('#todayLogins').text('3');
         } catch (error) {
             console.error('加载仪表盘数据失败:', error);
-            Utils.showAlert('加载数据失败', 'danger');
+            Utils.showAlert('加载仪表盘数据失败', 'danger');
         }
     },
 
-    /**
-     * 加载用户列表
-     */
-    loadUsers: async function() {
+    async loadUsers() {
+        if (this.userRole !== 'admin') {
+            return;
+        }
+
         try {
             const response = await API.get('/admin/users');
-            
             if (response.code === 0) {
                 const users = response.data && Array.isArray(response.data.users) ? response.data.users : [];
                 this.renderUsersTable(users);
-
                 if (response.data && typeof response.data.total === 'number') {
                     $('#totalUsers').text(response.data.total);
                 }
             } else {
-                Utils.showAlert('加载用户列表失败: ' + response.message, 'danger');
+                Utils.showAlert(`加载用户列表失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('加载用户列表失败:', error);
@@ -155,115 +195,105 @@ const HomePage = {
         }
     },
 
-    /**
-     * 渲染用户表格
-     * @param {Array} users - 用户列表
-     */
-    renderUsersTable: function(users) {
-        const tbody = $('#usersTableBody');
-        
-        if (users.length === 0) {
-            tbody.html('<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>');
+    renderUsersTable(users) {
+        const $tbody = $('#usersTableBody');
+        if (!users.length) {
+            $tbody.html('<tr><td colspan="6" class="text-center text-muted">暂无用户数据</td></tr>');
             return;
         }
-        
-        const html = users.map(user => `
-            <tr>
-                <td>${user.id}</td>
-                <td>${user.username}</td>
-                <td>
-                    <span class="badge ${user.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
-                        ${user.role === 'admin' ? '管理员' : '普通用户'}
-                    </span>
-                </td>
-                <td>
-                    <span class="badge bg-success">活跃</span>
-                </td>
-                <td>${Utils.formatDate(user.created_at)}</td>
-                <td>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary" onclick="HomePage.editUser(${user.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-outline-danger" onclick="HomePage.deleteUser(${user.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
-        
-        tbody.html(html);
+
+        const html = users.map((user) => {
+            const roleLabel = user.role === 'admin' ? '管理员' : '普通用户';
+            const roleClass = user.role === 'admin' ? 'role-badge admin' : 'role-badge user';
+
+            return `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.username}</td>
+                    <td><span class="${roleClass}">${roleLabel}</span></td>
+                    <td><span class="badge bg-success">活跃</span></td>
+                    <td>${Utils.formatDate(user.created_at)}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary" onclick="HomePage.editUser(${user.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-outline-danger" onclick="HomePage.deleteUser(${user.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        $tbody.html(html);
     },
 
-    /**
-     * 加载Token列表
-     */
-    loadTokens: async function() {
+    loadTokens() {
         this.renderTokensTable([]);
     },
 
-    /**
-     * 渲染Token表格
-     * @param {Array} tokens - Token列表
-     */
-    renderTokensTable: function(tokens) {
-        const tbody = $('#tokensTableBody');
-        
-        tbody.html('<tr><td colspan="5" class="text-center text-muted">生成的 Token 仅会在创建时显示，请在用户页保存。</td></tr>');
+    renderTokensTable(tokens) {
+        const $tbody = $('#tokensTableBody');
+        if (!tokens.length) {
+            $tbody.html('<tr><td colspan="5" class="text-center text-muted">生成的 Token 仅会在创建时显示，请在上方保存。</td></tr>');
+            return;
+        }
+
+        const rows = tokens.map((token) => `
+            <tr>
+                <td>${token.value || '-'}</td>
+                <td>${token.role || '-'}</td>
+                <td>${token.expire_at ? Utils.formatDate(token.expire_at) : '-'}</td>
+                <td>${token.created_at ? Utils.formatDate(token.created_at) : '-'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="HomePage.deleteToken(${token.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        $tbody.html(rows);
     },
 
-    /**
-     * 切换用户下拉菜单
-     */
-    toggleUserMenu: function() {
+    toggleUserMenu() {
         $('#userDropdownMenu').toggleClass('show');
     },
 
-    /**
-     * 显示用户信息
-     */
-    showUserInfo: function() {
+    showUserInfo() {
         $('#userDropdownMenu').removeClass('show');
         Utils.showAlert('用户信息功能开发中...', 'info');
     },
 
-    /**
-     * 显示修改密码模态框
-     */
-    showChangePassword: function() {
+    showChangePassword() {
         $('#userDropdownMenu').removeClass('show');
-        $('#changePasswordModal').modal('show');
         $('#changePasswordForm')[0].reset();
+        $('#changePasswordModal').modal('show');
     },
 
-    /**
-     * 显示添加用户模态框
-     */
-    showAddUserModal: function() {
-        $('#addUserModal').modal('show');
+    showAddUserModal() {
+        if (this.userRole !== 'admin') {
+            Utils.showAlert('只有管理员可以添加用户', 'warning');
+            return;
+        }
         $('#addUserForm')[0].reset();
+        $('#addUserModal').modal('show');
     },
 
-    /**
-     * 显示生成Token模态框
-     */
-    showGenerateTokenModal: function() {
-        $('#generateTokenModal').modal('show');
-        $('#generateTokenForm')[0].reset();
-    },
+    async addUser() {
+        if (this.userRole !== 'admin') {
+            Utils.showAlert('只有管理员可以添加用户', 'warning');
+            return;
+        }
 
-    /**
-     * 添加用户
-     */
-    addUser: async function() {
-        const form = $('#addUserForm');
-        const formData = new FormData(form[0]);
-        
+        const form = $('#addUserForm')[0];
+        const formData = new FormData(form);
         const data = {
             username: formData.get('username'),
             password: formData.get('password'),
-            role: formData.get('role')
+            role: formData.get('role'),
         };
 
         if (!data.username || !data.password) {
@@ -275,15 +305,13 @@ const HomePage = {
 
         try {
             Utils.showLoading(true, submitSelector);
-            
             const response = await API.post('/admin/add_user', data);
-            
             if (response.code === 0) {
                 Utils.showAlert('用户添加成功', 'success');
                 $('#addUserModal').modal('hide');
                 this.loadUsers();
             } else {
-                Utils.showAlert('添加用户失败: ' + response.message, 'danger');
+                Utils.showAlert(`添加用户失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('添加用户失败:', error);
@@ -293,95 +321,105 @@ const HomePage = {
         }
     },
 
-    /**
-     * 生成Token
-     */
-    generateToken: async function() {
-        const form = $('#generateTokenForm');
-        const formData = new FormData(form[0]);
-        
-        const data = {
-            expire: parseInt(formData.get('expire'), 10)
-        };
+    handleAddUser(e) {
+        e.preventDefault();
+        this.addUser();
+    },
 
-        if (!Number.isFinite(data.expire) || data.expire <= 0) {
+    async generateToken() {
+        const form = $('#generateTokenForm')[0];
+        const formData = new FormData(form);
+        const expire = parseInt(formData.get('expire'), 10);
+
+        if (!Number.isFinite(expire) || expire <= 0) {
             Utils.showAlert('请选择有效的过期时间', 'warning');
             return;
         }
 
+        const submitSelector = '#generateTokenForm button[type="submit"]';
+
         try {
-            Utils.showLoading(true);
-            
-            const response = await API.post('/user/generate_token', data);
-            
-            if (response.code === 0) {
-                Utils.showAlert('Token生成成功，请及时保存', 'success');
-                $('#generateTokenModal').modal('hide');
+            Utils.showLoading(true, submitSelector);
+            const response = await API.post('/user/generate_token', { expire });
+
+            if (response.code === 0 && response.token) {
+                $('#generatedToken').val(response.token);
+                $('#tokenResultPlaceholder').addClass('d-none');
+                $('#tokenResultRow').removeClass('d-none');
+                Utils.showAlert('Token 生成成功，请及时保存', 'success');
+                form.reset();
             } else {
-                Utils.showAlert('生成Token失败: ' + response.message, 'danger');
+                Utils.showAlert(`生成 Token 失败: ${response.message || '未知错误'}`, 'danger');
             }
         } catch (error) {
             console.error('生成Token失败:', error);
-            Utils.showAlert('生成Token失败', 'danger');
+            Utils.showAlert('生成 Token 失败', 'danger');
         } finally {
-            Utils.showLoading(false);
+            Utils.showLoading(false, submitSelector);
         }
     },
 
-    /**
-     * 修改密码
-     */
-    changePassword: async function() {
-        const form = $('#changePasswordForm');
-        const formData = new FormData(form[0]);
-        
+    handleGenerateToken(e) {
+        e.preventDefault();
+        this.generateToken();
+    },
+
+    async changePassword() {
+        const form = $('#changePasswordForm')[0];
+        const formData = new FormData(form);
         const data = {
             old_password: formData.get('old_password'),
-            new_password: formData.get('new_password')
+            new_password: formData.get('new_password'),
         };
-
         const confirmPassword = $('#confirmPassword').val();
+
         if (data.new_password !== confirmPassword) {
-            Utils.showAlert('两次输入的密码不一致', 'warning');
+            Utils.showAlert('两次输入的新密码不一致', 'warning');
             return;
         }
 
+        const submitSelector = '#changePasswordForm button[type="submit"]';
+
         try {
-            Utils.showLoading(true);
-            
+            Utils.showLoading(true, submitSelector);
             const response = await API.post('/auth/change_password', data);
-            
             if (response.code === 0) {
                 Utils.showAlert('密码修改成功', 'success');
                 $('#changePasswordModal').modal('hide');
-                form[0].reset();
+                form.reset();
             } else {
-                Utils.showAlert('密码修改失败: ' + response.message, 'danger');
+                Utils.showAlert(`密码修改失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('密码修改失败:', error);
             Utils.showAlert('密码修改失败', 'danger');
         } finally {
-            Utils.showLoading(false);
+            Utils.showLoading(false, submitSelector);
         }
     },
 
-    /**
-     * 删除用户
-     */
-    deleteUser: async function(userId) {
+    handleChangePassword(e) {
+        e.preventDefault();
+        this.changePassword();
+    },
+
+    async deleteUser(userId) {
+        if (this.userRole !== 'admin') {
+            Utils.showAlert('只有管理员可以删除用户', 'warning');
+            return;
+        }
+
         if (!confirm('确定要删除这个用户吗？此操作不可恢复！')) {
             return;
         }
 
         try {
             const response = await API.delete('/admin/delete_user', { user_id: userId });
-            
             if (response.code === 0) {
                 Utils.showAlert('用户删除成功', 'success');
                 this.loadUsers();
             } else {
-                Utils.showAlert('删除用户失败: ' + response.message, 'danger');
+                Utils.showAlert(`删除用户失败: ${response.message}`, 'danger');
             }
         } catch (error) {
             console.error('删除用户失败:', error);
@@ -389,100 +427,65 @@ const HomePage = {
         }
     },
 
-    /**
-     * 删除Token
-     */
-    deleteToken: async function(tokenId) {
-        if (!confirm('确定要删除这个Token吗？')) {
-            return;
-        }
-
+    deleteToken() {
         Utils.showAlert('当前版本仅支持临时 Token，无需删除。', 'info');
     },
 
-    /**
-     * 搜索用户
-     */
-    searchUsers: function() {
+    searchUsers() {
+        if (this.userRole !== 'admin') {
+            return;
+        }
         const keyword = $('#searchInput').val();
-        console.log('搜索用户:', keyword);
+        console.debug('搜索用户:', keyword);
     },
 
-    /**
-     * 筛选用户
-     */
-    filterUsers: function() {
+    filterUsers() {
+        if (this.userRole !== 'admin') {
+            return;
+        }
         const role = $('#roleFilter').val();
-        console.log('筛选角色:', role);
+        console.debug('筛选角色:', role);
     },
 
-    /**
-     * 刷新用户列表
-     */
-    refreshUsers: function() {
+    refreshUsers() {
         this.loadUsers();
     },
 
-    /**
-     * 编辑用户
-     */
-    editUser: function(userId) {
+    editUser() {
         Utils.showAlert('编辑功能开发中...', 'info');
     },
 
-    /**
-     * 查看Token
-     */
-    /**
-     * 处理表单提交
-     */
-    handleAddUser: function(e) {
-        e.preventDefault();
-        this.addUser();
-    },
-
-    handleGenerateToken: function(e) {
-        e.preventDefault();
-        this.generateToken();
-    },
-
-    handleChangePassword: function(e) {
-        e.preventDefault();
-        this.changePassword();
-    },
-
-    /**
-     * 登出
-     */
-    logout: function() {
-        if (confirm('确定要退出登录吗？')) {
-            Utils.clearToken();
-            API.post('/logout', {}).finally(() => {
-                window.location.href = '/login';
-            });
+    copyToken() {
+        const token = $('#generatedToken').val();
+        if (!token) {
+            Utils.showAlert('暂无可复制的 Token', 'warning');
+            return;
         }
+        Utils.copyToClipboard(token);
     },
 
-    /**
-     * 防抖函数
-     */
-    debounce: function(func, wait) {
+    logout() {
+        $('#userDropdownMenu').removeClass('show');
+        if (!confirm('确定要退出登录吗？')) {
+            return;
+        }
+        Utils.clearToken();
+        API.post('/logout', {}).finally(() => {
+            window.location.href = '/login';
+        });
+    },
+
+    debounce(func, wait) {
         let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
+        return (...args) => {
             clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
+            timeout = setTimeout(() => func.apply(this, args), wait);
         };
-    }
+    },
 };
 
-// 页面加载完成后初始化
-$(document).ready(function() {
+$(document).ready(() => {
     HomePage.init();
 });
 
-// 导出到全局
 window.HomePage = HomePage;

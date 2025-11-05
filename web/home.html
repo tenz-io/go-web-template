@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+    <title>{{.appName}} - 控制台</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/fontawesome.min.css" rel="stylesheet">
+    <link href="/static/css/common.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f6fa;
+        }
+        .sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .sidebar .brand {
+            padding: 1.5rem 1.25rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        .sidebar .brand span {
+            font-weight: 700;
+        }
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            border-radius: 0.5rem;
+            margin: 0.25rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .sidebar .nav-link[data-role="admin"]::after {
+            content: "ADMIN";
+            font-size: 0.65rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            margin-left: auto;
+        }
+        .topbar {
+            background: #fff;
+            box-shadow: 0 1px 4px rgba(15, 34, 58, 0.12);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar .user-dropdown {
+            position: relative;
+        }
+        .topbar .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+        }
+        .dropdown-menu-custom {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-width: 180px;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 30px rgba(15, 34, 58, 0.15);
+            padding: 0.5rem 0;
+            display: none;
+        }
+        .dropdown-menu-custom.show {
+            display: block;
+        }
+        .dropdown-menu-custom a {
+            display: block;
+            padding: 0.6rem 1.25rem;
+            color: #4b5563;
+            text-decoration: none;
+            transition: background 0.2s ease;
+        }
+        .dropdown-menu-custom a:hover {
+            background: #f3f4f6;
+        }
+        .tab-content {
+            background: transparent;
+        }
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(15, 34, 58, 0.08);
+        }
+        .stat-card {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+        }
+        .stat-card .icon {
+            font-size: 2.5rem;
+            opacity: 0.85;
+        }
+        .table-responsive {
+            border-radius: 1rem;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 10px 30px rgba(15, 34, 58, 0.08);
+        }
+        .role-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .role-badge.admin {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+        .role-badge.user {
+            background: rgba(59, 130, 246, 0.12);
+            color: #2563eb;
+        }
+        @media (max-width: 992px) {
+            .sidebar {
+                min-height: auto;
+            }
+            .sidebar .brand {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body data-role="{{.role}}" data-username="{{.username}}" data-display-name="{{.displayName}}" data-app-name="{{.appName}}" data-is-admin="{{.isAdmin}}">
+    <div class="container-fluid">
+        <div class="row g-0">
+            <aside class="col-12 col-lg-2 sidebar">
+                <div class="brand">
+                    <div class="d-flex flex-column align-items-center">
+                        <div class="user-avatar mb-3">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <span>{{.appName}}</span>
+                        <small class="text-white-50 mt-1">统一控制台</small>
+                    </div>
+                </div>
+                <nav class="nav flex-column py-3" id="sidebarMenu">
+                    <a class="nav-link active" href="#" data-tab="dashboard" data-visible-for="all">
+                        <i class="fas fa-tachometer-alt"></i>
+                        仪表盘
+                    </a>
+                    <a class="nav-link" href="#" data-tab="users" data-visible-for="admin">
+                        <i class="fas fa-users"></i>
+                        用户管理
+                    </a>
+                    <a class="nav-link" href="#" data-tab="tokens" data-visible-for="all">
+                        <i class="fas fa-key"></i>
+                        Token 管理
+                    </a>
+                    <hr class="mx-3 text-white-25">
+                    <a class="nav-link" href="#" onclick="HomePage.showChangePassword(); return false;" data-visible-for="all">
+                        <i class="fas fa-key"></i>
+                        修改密码
+                    </a>
+                    <a class="nav-link" href="#" onclick="HomePage.logout(); return false;" data-visible-for="all">
+                        <i class="fas fa-sign-out-alt"></i>
+                        退出登录
+                    </a>
+                </nav>
+            </aside>
+
+            <main class="col-12 col-lg-10">
+                <nav class="navbar topbar mb-4">
+                    <div class="container-fluid">
+                        <div class="d-flex flex-column">
+                            <span class="text-muted small">欢迎回来</span>
+                            <span class="fw-semibold" id="pageTitle">仪表盘</span>
+                        </div>
+                        <div class="d-flex align-items-center user-dropdown">
+                            <div class="me-3 text-end">
+                                <div class="fw-semibold" id="userDisplayName">{{.displayName}}</div>
+                                <small class="text-muted" id="userRoleBadge">{{.role}}</small>
+                            </div>
+                            <div class="user-avatar" role="button" onclick="HomePage.toggleUserMenu()">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="dropdown-menu-custom" id="userDropdownMenu">
+                                <a href="#" onclick="HomePage.showUserInfo(); return false;">
+                                    <i class="fas fa-id-card me-2 text-primary"></i>个人信息
+                                </a>
+                                <a href="#" onclick="HomePage.showChangePassword(); return false;">
+                                    <i class="fas fa-unlock-alt me-2 text-warning"></i>修改密码
+                                </a>
+                                <div class="dropdown-divider my-1"></div>
+                                <a href="#" class="text-danger" onclick="HomePage.logout(); return false;">
+                                    <i class="fas fa-sign-out-alt me-2"></i>退出登录
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+
+                <div class="container-fluid pb-4">
+                    <section id="dashboard" class="tab-content">
+                        <div class="row g-4 mb-4">
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <div class="card stat-card h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <div class="text-uppercase small opacity-75">总用户数</div>
+                                                <div class="display-6 fw-bold mt-2" id="totalUsers">0</div>
+                                            </div>
+                                            <div class="icon">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <div class="card stat-card h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <div class="text-uppercase small opacity-75">活跃用户</div>
+                                                <div class="display-6 fw-bold mt-2" id="activeUsers">0</div>
+                                            </div>
+                                            <div class="icon">
+                                                <i class="fas fa-chart-line"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <div class="card stat-card h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <div class="text-uppercase small opacity-75">Token 总数</div>
+                                                <div class="display-6 fw-bold mt-2" id="tokenCount">0</div>
+                                            </div>
+                                            <div class="icon">
+                                                <i class="fas fa-key"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-sm-6 col-xl-3">
+                                <div class="card stat-card h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <div class="text-uppercase small opacity-75">今日登录</div>
+                                                <div class="display-6 fw-bold mt-2" id="todayLogins">0</div>
+                                            </div>
+                                            <div class="icon">
+                                                <i class="fas fa-clock"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <i class="fas fa-lightbulb text-warning me-2"></i>快速提示
+                                </h5>
+                                <p class="text-muted mb-0">
+                                    使用统一的模板即可完成管理员和普通用户的日常操作。根据权限自动展示侧边菜单与功能模块，保持界面一致性的同时兼顾安全性。
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="users" class="tab-content" style="display: none;" data-role="admin">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="mb-0"><i class="fas fa-users text-primary me-2"></i>用户管理</h5>
+                                        <small class="text-muted">可管理系统中的所有账号、角色与状态</small>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <input type="text" class="form-control" id="searchInput" placeholder="搜索用户名...">
+                                        <select class="form-select" id="roleFilter">
+                                            <option value="">全部角色</option>
+                                            <option value="admin">管理员</option>
+                                            <option value="user">普通用户</option>
+                                        </select>
+                                        <button class="btn btn-primary" onclick="HomePage.showAddUserModal()">
+                                            <i class="fas fa-plus me-1"></i>添加用户
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>用户名</th>
+                                                <th>角色</th>
+                                                <th>状态</th>
+                                                <th>创建时间</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="usersTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center text-muted">加载中...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="tokens" class="tab-content" style="display: none;">
+                        <div class="row g-4">
+                            <div class="col-12 col-lg-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <div>
+                                                <h5 class="mb-1"><i class="fas fa-key text-primary me-2"></i>生成 API Token</h5>
+                                                <small class="text-muted">Token 仅在生成时展示一次，请妥善保存</small>
+                                            </div>
+                                        </div>
+                                        <form id="generateTokenForm">
+                                            <div class="mb-3">
+                                                <label for="tokenExpire" class="form-label">有效期</label>
+                                                <select class="form-select" id="tokenExpire" name="expire">
+                                                    <option value="3600">1 小时</option>
+                                                    <option value="21600">6 小时</option>
+                                                    <option value="86400">1 天</option>
+                                                    <option value="604800">7 天</option>
+                                                    <option value="15552000">180 天</option>
+                                                    <option value="31104000">360 天</option>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">
+                                                <span class="btn-text">生成 Token</span>
+                                                <span class="loading spinner-border spinner-border-sm text-light" role="status"></span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="mb-3"><i class="fas fa-shield-alt text-success me-2"></i>上次生成结果</h5>
+                                        <div id="tokenResultRow" class="d-none">
+                                            <div class="alert alert-warning" role="alert">
+                                                请立即复制 Token（关闭页面后将无法再次查看）。
+                                            </div>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="generatedToken" readonly>
+                                                <button class="btn btn-outline-secondary" type="button" onclick="HomePage.copyToken()">
+                                                    <i class="fas fa-copy me-1"></i>复制
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="tokenResultPlaceholder" class="text-muted small">
+                                            生成 Token 后会显示在此，便于快速复制和分发。
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mt-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="fas fa-history me-2 text-secondary"></i>Token 列表</h5>
+                                    <small class="text-muted">当前仅支持临时 Token，历史记录功能即将上线</small>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Token</th>
+                                                <th>角色</th>
+                                                <th>过期时间</th>
+                                                <th>创建时间</th>
+                                                <th>操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tokensTableBody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">生成的 Token 仅会在创建时显示，请在上方保存。</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 添加/编辑用户 -->
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="mb-3">
+                            <label for="userUsername" class="form-label">用户名</label>
+                            <input type="text" class="form-control" id="userUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userPassword" class="form-label">密码</label>
+                            <input type="password" class="form-control" id="userPassword" name="password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="userRole" class="form-label">角色</label>
+                            <select class="form-select" id="userRole" name="role">
+                                <option value="user">普通用户</option>
+                                <option value="admin">管理员</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" form="addUserForm">
+                        <span class="btn-text">保存</span>
+                        <span class="loading spinner-border spinner-border-sm text-light" role="status"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 修改密码 -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">修改密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label for="oldPassword" class="form-label">旧密码</label>
+                            <input type="password" class="form-control" id="oldPassword" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="newPassword" class="form-label">新密码</label>
+                            <input type="password" class="form-control" id="newPassword" name="new_password" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">确认新密码</label>
+                            <input type="password" class="form-control" id="confirmPassword" required minlength="6">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" form="changePasswordForm">
+                        <span class="btn-text">保存</span>
+                        <span class="loading spinner-border spinner-border-sm text-light" role="status"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/home.js"></script>
+</body>
+</html>

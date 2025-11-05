@@ -92,12 +92,18 @@ func (ws *WebServer) registerRoutes() {
 	// 页面路由（最后注册，避免被API路由覆盖）
 	// 首页 - 不需要认证
 	ws.engine.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", gin.H{})
+		c.HTML(http.StatusOK, "index.html", gin.H{
+			"name":    ws.cfg.App.Name,
+			"appName": ws.cfg.App.Name,
+		})
 	})
 
 	// 登录页面 - 不需要认证
 	ws.engine.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", gin.H{})
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"name":    ws.cfg.App.Name,
+			"appName": ws.cfg.App.Name,
+		})
 	})
 }
 

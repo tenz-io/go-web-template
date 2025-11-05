@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
 
+	"go-web-template/internal/config"
 	"go-web-template/internal/constant"
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
@@ -17,12 +18,14 @@ import (
 type UserController struct {
 	userService service.User
 	jwtManager  *middleware.JWTManager
+	appName     string
 }
 
-func NewUserController(userService service.User, jwtManager *middleware.JWTManager) *UserController {
+func NewUserController(cfg *config.Config, userService service.User, jwtManager *middleware.JWTManager) *UserController {
 	return &UserController{
 		userService: userService,
 		jwtManager:  jwtManager,
+		appName:     cfg.App.Name,
 	}
 }
 
@@ -40,30 +43,26 @@ func (u *UserController) home(c *gin.Context) {
 	userID, _, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
 		le.WithError(err).Error("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 
 	userModel, err := u.userService.GetUser(c.Request.Context(), userID)
 	if err != nil {
 		le.WithError(err).Error("failed to get user model")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "获取用户信息失败",
-			},
-		})
+		c.Redirect(http.StatusFound, "/login")
 		return
 	}
 
-	c.HTML(http.StatusOK, "user_home.html", gin.H{
-		"name": userModel.Username,
-		"role": constant.Role(userModel.Role).String(),
+	role := constant.Role(userModel.Role)
+
+	c.HTML(http.StatusOK, "home.html", gin.H{
+		"appName":     u.appName,
+		"name":        u.appName,
+		"username":    userModel.Username,
+		"displayName": userModel.Username,
+		"role":        role.String(),
+		"isAdmin":     role == constant.RoleAdmin,
 	})
 }
 

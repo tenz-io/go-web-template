@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
 
+	"go-web-template/internal/config"
 	"go-web-template/internal/constant"
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
@@ -16,25 +17,52 @@ import (
 type AdminController struct {
 	userService service.User
 	jwtManager  *middleware.JWTManager
+	appName     string
 }
 
-func NewAdminController(userService service.User, jwtManager *middleware.JWTManager) *AdminController {
+func NewAdminController(cfg *config.Config, userService service.User, jwtManager *middleware.JWTManager) *AdminController {
 	return &AdminController{
 		userService: userService,
 		jwtManager:  jwtManager,
+		appName:     cfg.App.Name,
 	}
 }
 
 // 注册管理路由
 func (a *AdminController) RegisterRoutes(r *gin.RouterGroup) {
-	r.GET("/home", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "admin_home.html", gin.H{
-			"name": "go-web-template",
-		})
-	})
+	r.GET("/home", a.home)
 	r.GET("/users", a.GetUsers)
 	r.POST("/add_user", a.AddUser)
 	r.DELETE("/delete_user", a.DeleteUser)
+}
+
+func (a *AdminController) home(c *gin.Context) {
+	le := logger.FromContext(c.Request.Context())
+
+	userID, _, err := middleware.GetUserInfoFromContext(c)
+	if err != nil {
+		le.WithError(err).Warn("failed to get user info from context")
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	userModel, err := a.userService.GetUser(c.Request.Context(), userID)
+	if err != nil {
+		le.WithError(err).Error("failed to get user model")
+		c.Redirect(http.StatusFound, "/login")
+		return
+	}
+
+	role := constant.Role(userModel.Role)
+
+	c.HTML(http.StatusOK, "home.html", gin.H{
+		"appName":     a.appName,
+		"name":        a.appName,
+		"username":    userModel.Username,
+		"displayName": userModel.Username,
+		"role":        role.String(),
+		"isAdmin":     role == constant.RoleAdmin,
+	})
 }
 
 // GetUsers 获取用户列表
@@ -168,4 +196,10 @@ func (a *AdminController) DeleteUser(c *gin.Context) {
 		return
 	}
 
+	c.JSON(http.StatusOK, response.SuccessResponse{
+		BaseResponse: response.BaseResponse{
+			Code:    0,
+			Message: "用户删除成功",
+		},
+	})
 }

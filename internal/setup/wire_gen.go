@@ -28,9 +28,9 @@ func InitializeControllers(cfg *config.Config) (*Controllers, error) {
 	}
 	apiController := controller.NewApiController(user, jwtManager)
 	serviceUser := service.NewUserService(cfg, user)
-	adminController := controller.NewAdminController(serviceUser, jwtManager)
+	adminController := controller.NewAdminController(cfg, serviceUser, jwtManager)
 	authController := controller.NewAuthController(user, serviceUser, jwtManager)
-	userController := controller.NewUserController(serviceUser, jwtManager)
+	userController := controller.NewUserController(cfg, serviceUser, jwtManager)
 	webServer := controller.NewWebServer(cfg, apiController, adminController, authController, userController, jwtManager)
 	cron := ProvideCron()
 	healthReporter := job.NewHealthReporter(cron)
