@@ -46,10 +46,14 @@ func (ac *AuthController) RegisterRoutes(rg *gin.RouterGroup) {
 
 // Login 统一登录接口
 func (ac *AuthController) Login(c *gin.Context) {
-	var req request.LoginRequest
+	var (
+		le  = logger.FromContext(c.Request.Context())
+		req request.LoginRequest
+	)
 
 	// 只支持JSON提交
 	if err := c.ShouldBindJSON(&req); err != nil {
+		le.WithError(err).Error("invalid request")
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
 				Code:    400,
@@ -59,7 +63,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	le := logger.FromContext(c.Request.Context()).WithFields(logger.Fields{
+	le = logger.FromContext(c.Request.Context()).WithFields(logger.Fields{
 		"username": req.Username,
 	})
 

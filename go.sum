@@ -36,6 +36,8 @@ github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/subcommands v1.2.0/go.mod h1:ZjhPrFU+Olkh9WazFPsl27BQ4UPiG37m3yTrtFlrHVk=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/google/wire v0.6.0 h1:HBkoIh4BdSxoyo9PveV8giw7ZsaBOvzWKfcg/6MrVwI=
 github.com/google/wire v0.6.0/go.mod h1:F4QhpQ9EDIdJ1Mbop/NZBRB+5yrR6qg3BnctaoUk6NA=
 github.com/jinzhu/inflection v1.0.0 h1:K317FqzuhWc8YvSVlFMCCUb36O/S9MCKRDI7QkRKD/E=
@@ -103,6 +105,8 @@ github.com/tenz-io/gokit/cmd v1.0.8 h1:7hNeOAMWSJfiEeA62mYW0BQL5EeGwvlIzK7/kWTde
 github.com/tenz-io/gokit/cmd v1.0.8/go.mod h1:YZjEs1IwKNicl+4udPS8Uh5Td2la0QndYnuD8NgcZr8=
 github.com/tenz-io/gokit/logger v1.5.3 h1:2z9qgYlfsIi1Y4qvY+ibX9uDWGInOKvHmJJbh7yJSRY=
 github.com/tenz-io/gokit/logger v1.5.3/go.mod h1:X//3sk2BZe0yPpOleb3Dwlwl8pRlKGs1vZQ+OAFS9Tw=
+github.com/tenz-io/gokit/tracer v1.0.1 h1:1ZTXjtefUP2c12T3btYn78y0t8g6G+SYXGeo5C0fX5g=
+github.com/tenz-io/gokit/tracer v1.0.1/go.mod h1:F9L1dQrnGP93XGbNFBkBBw9W0EfqT5M76ewJawb95EA=
 github.com/twitchyliquid64/golang-asm v0.15.1 h1:SU5vSMR7hnwNxj24w34ZyCi/FmDZTkS4MhqMhdFk5YI=
 github.com/twitchyliquid64/golang-asm v0.15.1/go.mod h1:a1lVb/DtPvCB8fslRZhAngC2+aY1QWCk3Cedj/Gdt08=
 github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65EE=

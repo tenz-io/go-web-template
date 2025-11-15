@@ -149,19 +149,24 @@ type AuthConfig struct {
 // 鉴权中间件
 func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		le := logger.FromContext(c.Request.Context())
+
 		if !config.Required {
+			le.Debug("authentication not required, skipping")
 			c.Next()
 			return
 		}
 
 		switch config.Type {
 		case AuthTypeNone:
+			le.Debug("configured to skip authentication")
 			c.Next()
 		case AuthTypeBearer:
 			handleBearerAuth(c, jwtManager)
 		case AuthTypeCookie:
 			handleCookieAuth(c, jwtManager, config.Role)
 		default:
+			le.Warn("unknown auth type, aborting")
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"code":    401,
 				"message": "不支持的鉴权类型",
@@ -173,8 +178,11 @@ func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 
 // Bearer Token 认证
 func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
+	le := logger.FromContext(c.Request.Context())
+
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
+		le.Warn("Authorization header is empty")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    401,
 			"message": "缺少 Authorization 头",
@@ -185,6 +193,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 	if token == authHeader {
+		le.Warn("Authorization header is valid")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    401,
 			"message": "无效的 Bearer token",
@@ -195,7 +204,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 
 	claims, err := jwtManager.ValidateToken(token)
 	if err != nil {
-		logger.FromContext(c.Request.Context()).Warn("JWT validation failed")
+		le.Warn("JWT validation failed")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"code":    401,
 			"message": "无效的 token",
@@ -204,9 +213,12 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 		return
 	}
 
+	le.Debug("validate token")
+
 	// 设置用户信息到上下文
 	c.Set(userIdName, claims.UserID)
 	c.Set(roleName, claims.Role)
+
 	c.Next()
 }
 
@@ -241,6 +253,7 @@ func GetUserInfoFromContext(c *gin.Context) (userID int64, role int32, err error
 // Cookie 认证（通用）
 func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role) {
 	le := logger.FromContext(c.Request.Context())
+
 	token, err := c.Cookie(JWTTokenCookieName)
 	if err != nil {
 		le.Warn("JWT cookie auth failed")
@@ -263,6 +276,7 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 	case constant.RoleAdmin:
 		// 管理员权限：必须是管理员角色
 		if claims.Role != int32(constant.RoleAdmin) {
+			le.Warn("JWT role is invalid")
 			logger.FromContext(c.Request.Context()).Warn("Admin authentication failed: insufficient role")
 			c.Redirect(http.StatusTemporaryRedirect, "/login?error=权限不足")
 			c.Abort()
@@ -271,6 +285,8 @@ func handleCookieAuth(c *gin.Context, jwtManager *JWTManager, role constant.Role
 	default:
 		//ignore
 	}
+
+	le.Debug("validate token")
 
 	// 设置用户信息到上下文
 	c.Set(userIdName, claims.UserID)

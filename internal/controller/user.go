@@ -68,8 +68,12 @@ func (uc *UserController) home(c *gin.Context) {
 
 // generateToken 用户生成 API Token（JWT 格式）
 func (uc *UserController) generateToken(c *gin.Context) {
-	var req request.UserGenerateTokenRequest
+	var (
+		le  = logger.FromContext(c.Request.Context())
+		req request.UserGenerateTokenRequest
+	)
 	if err := c.ShouldBindJSON(&req); err != nil {
+		le.Warn("invalid request params")
 		c.JSON(http.StatusBadRequest, response.ErrorResponse{
 			BaseResponse: response.BaseResponse{
 				Code:    400,
@@ -79,7 +83,6 @@ func (uc *UserController) generateToken(c *gin.Context) {
 		return
 	}
 
-	le := logger.FromContext(c.Request.Context())
 	le.Debug("user generate api token")
 
 	userID, userRole, err := middleware.GetUserInfoFromContext(c)

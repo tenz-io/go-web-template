@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
+	"github.com/tenz-io/gokit/tracer"
 )
 
 // 日志中间件
@@ -14,17 +16,42 @@ func Logger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
-		c.Next()
-
-		if raw != "" {
-			path = path + "?" + raw
+		ctx := c.Request.Context()
+		requestID := c.GetHeader("X-Request-Id")
+		if requestID == "" {
+			requestID = tracer.RequestIdFromCtx(ctx)
 		}
 
-		logger.FromContext(c.Request.Context()).
+		le := logger.FromContext(ctx).
+			WithTracing(requestID).
 			WithFields(logger.Fields{
-				"path":     path,
-				"duration": time.Now().Sub(start).String(),
-			}).Info("HTTP Request")
+				"path": path,
+			})
+		ctx = logger.WithLogger(ctx, le)
+
+		te := logger.TrafficEntryFromContext(ctx).
+			WithTracing(requestID).
+			WithFields(logger.Fields{
+				"path": path,
+			})
+		ctx = logger.WithTrafficEntry(ctx, te)
+
+		c.Request = c.Request.WithContext(ctx)
+
+		c.Next()
+
+		logger.TrafficEntryFromContext(c.Request.Context()).
+			WithFields(logger.Fields{
+				"method":    c.Request.Method,
+				"client_ip": c.ClientIP(),
+			}).Data(&logger.Traffic{
+			Typ:  logger.TrafficTypRecv,
+			Cmd:  path,
+			Cost: time.Now().Sub(start),
+			Code: strconv.Itoa(c.Writer.Status()),
+			Msg:  "request",
+			Req:  raw,
+		})
 	}
 }
 
