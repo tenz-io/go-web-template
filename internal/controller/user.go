@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"go-web-template/internal/controller/middleware"
 	"net/http"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"go-web-template/internal/constant"
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
-	"go-web-template/internal/middleware"
 	"go-web-template/internal/service"
 )
 
@@ -74,12 +74,7 @@ func (uc *UserController) generateToken(c *gin.Context) {
 	)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		le.Warn("invalid request params")
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
+		response.FailWithJson(c, 400, "请求参数错误")
 		return
 	}
 
@@ -88,12 +83,7 @@ func (uc *UserController) generateToken(c *gin.Context) {
 	userID, userRole, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
 		le.WithError(err).Error("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
+		response.FailWithJson(c, 401, "未授权访问")
 		return
 	}
 
@@ -111,21 +101,12 @@ func (uc *UserController) generateToken(c *gin.Context) {
 	token, err := uc.jwtManager.GenerateTokenWithExpire(userID, userRole, expDuration)
 	if err != nil {
 		le.WithError(err).Error("failed to generate token")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "生成令牌失败",
-			},
-		})
+		response.FailWithJson(c, 500, "生成令牌失败")
 		return
 	}
 
 	le.Info("user token generated successfully")
-	c.JSON(http.StatusOK, response.UserGenerateTokenResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "令牌生成成功",
-		},
-		Token: token,
+	response.OkWithJson(c, gin.H{
+		"token": token,
 	})
 }

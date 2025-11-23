@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"net/http"
+	"go-web-template/internal/controller/middleware"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
@@ -9,7 +9,6 @@ import (
 	"go-web-template/internal/constant"
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
-	"go-web-template/internal/middleware"
 	"go-web-template/internal/repository/dao"
 	"go-web-template/internal/service"
 )
@@ -54,12 +53,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	// 只支持JSON提交
 	if err := c.ShouldBindJSON(&req); err != nil {
 		le.WithError(err).Error("invalid request")
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
+		response.FailWithJson(c, 400, "请求参数错误")
 		return
 	}
 
@@ -77,12 +71,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	userModel, err := ac.userService.VerifyUser(c.Request.Context(), verifyParam)
 	if err != nil {
 		le.Warn("user login failed")
-		c.JSON(http.StatusOK, response.LoginResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "用户名或密码错误",
-			},
-		})
+		response.FailWithJson(c, 401, "用户名或密码错误")
 		return
 	}
 
@@ -90,12 +79,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	token, err := ac.jwtManager.GenerateToken(userModel.ID, userModel.Role)
 	if err != nil {
 		le.Error("failed to generate token")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "生成令牌失败",
-			},
-		})
+		response.FailWithJson(c, 500, "生成令牌失败")
 		return
 	}
 
@@ -115,11 +99,7 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}).Info("user login successful")
 
 	// 返回JSON响应
-	c.JSON(http.StatusOK, response.LoginResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "登录成功",
-		},
+	response.OkWithJson(c, response.LoginResponseBody{
 		Role:     constant.Role(userModel.Role).String(),
 		Redirect: redirect,
 	})
@@ -130,34 +110,21 @@ func (ac *AuthController) Logout(c *gin.Context) {
 	// 清除 Cookie
 	c.SetCookie(middleware.JWTTokenCookieName, "", -1, "/", "", false, true)
 
-	c.JSON(http.StatusOK, response.BaseResponse{
-		Code:    0,
-		Message: "登出成功",
-	})
+	response.OkWithJson(c, nil)
 }
 
 // ChangePassword 修改密码（用户/管理员通用）
 func (ac *AuthController) ChangePassword(c *gin.Context) {
 	var req request.ChangePasswordRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
+		response.FailWithJson(c, 400, "请求参数错误")
 		return
 	}
 
 	userID, _, err := middleware.GetUserInfoFromContext(c)
 	if err != nil {
 		logger.FromContext(c.Request.Context()).WithError(err).Warn("failed to get user info from context")
-		c.JSON(http.StatusUnauthorized, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    401,
-				Message: "未授权访问",
-			},
-		})
+		response.FailWithJson(c, 401, "未授权访问")
 		return
 	}
 
@@ -168,19 +135,9 @@ func (ac *AuthController) ChangePassword(c *gin.Context) {
 
 	if err := ac.userService.UpdatePassword(c.Request.Context(), userID, updateParam); err != nil {
 		logger.FromContext(c.Request.Context()).WithError(err).Error("failed to update password")
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: err.Error(),
-			},
-		})
+		response.FailWithJson(c, 400, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "密码修改成功",
-		},
-	})
+	response.OkWithJson(c, nil)
 }

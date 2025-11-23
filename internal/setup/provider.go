@@ -3,9 +3,9 @@ package setup
 import (
 	"go-web-template/internal/config"
 	"go-web-template/internal/controller"
+	"go-web-template/internal/controller/middleware"
 	"go-web-template/internal/database"
 	"go-web-template/internal/job"
-	"go-web-template/internal/middleware"
 	repodao "go-web-template/internal/repository/dao"
 	"go-web-template/internal/service"
 

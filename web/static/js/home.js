@@ -362,8 +362,8 @@ const HomePage = {
             Utils.showLoading(true, submitSelector);
             const response = await API.post('/user/generate_token', { expire_hours: expireHours });
 
-            if (response.code === 0 && response.token) {
-                $('#generatedToken').val(response.token);
+            if (response.code === 0 && response.data && response.data.token) {
+                $('#generatedToken').val(response.data.token);
                 $('#tokenResultPlaceholder').addClass('d-none');
                 $('#tokenResultRow').removeClass('d-none');
                 Utils.inlineFeedback('#generateTokenFeedback', 'Token 生成成功，请及时保存', 'success');

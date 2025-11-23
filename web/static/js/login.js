@@ -120,7 +120,8 @@ const LoginPage = {
 
         // 根据角色跳转
         setTimeout(() => {
-            this.redirectToHome(result.redirect);
+            const redirect = result.data && result.data.redirect ? result.data.redirect : '/user/home';
+            this.redirectToHome(redirect);
         }, 1000);
     },
 

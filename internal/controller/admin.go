@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"go-web-template/internal/controller/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +11,6 @@ import (
 	"go-web-template/internal/constant"
 	"go-web-template/internal/controller/request"
 	"go-web-template/internal/controller/response"
-	"go-web-template/internal/middleware"
 	"go-web-template/internal/service"
 )
 
@@ -78,12 +78,7 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 	users, total, err := ac.userService.ListUsers(c.Request.Context(), limit, offset)
 	if err != nil {
 		le.Error("failed to get users")
-		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    500,
-				Message: "获取用户列表失败",
-			},
-		})
+		response.FailWithJson(c, 500, "获取用户列表失败")
 		return
 	}
 
@@ -98,15 +93,9 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "获取用户列表成功",
-		},
-		Data: gin.H{
-			"users": userList,
-			"total": total,
-		},
+	response.OkWithJson(c, gin.H{
+		"users": userList,
+		"total": total,
 	})
 }
 
@@ -114,12 +103,7 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 func (ac *AdminController) AddUser(c *gin.Context) {
 	var req request.AdminAddUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
+		response.FailWithJson(c, 400, "请求参数错误")
 		return
 	}
 
@@ -130,12 +114,7 @@ func (ac *AdminController) AddUser(c *gin.Context) {
 	role, err := constant.ParseRole(req.Role)
 	if err != nil {
 		le.Error("invalid role")
-		c.JSON(http.StatusOK, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "无效的用户角色",
-			},
-		})
+		response.FailWithJson(c, 400, "无效的用户角色")
 		return
 	}
 
@@ -148,35 +127,19 @@ func (ac *AdminController) AddUser(c *gin.Context) {
 	user, err := ac.userService.CreateUser(c.Request.Context(), createParam)
 	if err != nil {
 		le.Error("failed to create user")
-		c.JSON(http.StatusOK, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "创建用户失败: " + err.Error(),
-			},
-		})
+		response.FailWithJson(c, 400, "创建用户失败: "+err.Error())
 		return
 	}
 
 	le.Info("user created successfully")
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "用户创建成功",
-		},
-		Data: user,
-	})
+	response.OkWithJson(c, user)
 }
 
 // DeleteUser 删除用户
 func (ac *AdminController) DeleteUser(c *gin.Context) {
 	var req request.AdminDeleteUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "请求参数错误",
-			},
-		})
+		response.FailWithJson(c, 400, "请求参数错误")
 		return
 	}
 
@@ -187,19 +150,9 @@ func (ac *AdminController) DeleteUser(c *gin.Context) {
 	err := ac.userService.DeleteUser(c.Request.Context(), req.UserID)
 	if err != nil {
 		le.Error("failed to delete user")
-		c.JSON(http.StatusOK, response.ErrorResponse{
-			BaseResponse: response.BaseResponse{
-				Code:    400,
-				Message: "删除用户失败: " + err.Error(),
-			},
-		})
+		response.FailWithJson(c, 400, "删除用户失败: "+err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, response.SuccessResponse{
-		BaseResponse: response.BaseResponse{
-			Code:    0,
-			Message: "用户删除成功",
-		},
-	})
+	response.OkWithJson(c, nil)
 }

@@ -3,13 +3,13 @@ package controller
 import (
 	"fmt"
 	"go-web-template/internal/constant"
+	middleware2 "go-web-template/internal/controller/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tenz-io/gokit/logger"
 
 	"go-web-template/internal/config"
-	"go-web-template/internal/middleware"
 )
 
 type WebServer struct {
@@ -19,10 +19,10 @@ type WebServer struct {
 	admin      *AdminController
 	auth       *AuthController
 	user       *UserController
-	jwtManager *middleware.JWTManager
+	jwtManager *middleware2.JWTManager
 }
 
-func NewWebServer(cfg *config.Config, apiServer *ApiController, adminServer *AdminController, authServer *AuthController, userServer *UserController, jwtManager *middleware.JWTManager) *WebServer {
+func NewWebServer(cfg *config.Config, apiServer *ApiController, adminServer *AdminController, authServer *AuthController, userServer *UserController, jwtManager *middleware2.JWTManager) *WebServer {
 	if cfg.Verbose {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -44,9 +44,9 @@ func NewWebServer(cfg *config.Config, apiServer *ApiController, adminServer *Adm
 
 func (ws *WebServer) Init() error {
 	// 设置全局中间件
-	ws.engine.Use(middleware.Logger())
+	ws.engine.Use(middleware2.Logger())
 	ws.engine.Use(gin.Recovery())
-	ws.engine.Use(middleware.CORS())
+	ws.engine.Use(middleware2.CORS())
 
 	ws.engine.LoadHTMLGlob(ws.cfg.App.Web + "/*.html")
 	ws.engine.Static("/static", ws.cfg.App.Web+"/static")
@@ -64,8 +64,8 @@ func (ws *WebServer) registerRoutes() {
 
 	// 注册 API 路由（可选鉴权）
 	apiGroup := ws.engine.Group("api")
-	apiGroup.Use(middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeBearer,
+	apiGroup.Use(middleware2.Auth(middleware2.AuthConfig{
+		Type:     middleware2.AuthTypeBearer,
 		Required: true,
 		Role:     constant.RoleUser,
 	}, ws.jwtManager))
@@ -73,8 +73,8 @@ func (ws *WebServer) registerRoutes() {
 
 	// 注册管理路由（需要管理员权限）
 	adminGroup := ws.engine.Group("admin")
-	adminGroup.Use(middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeCookie,
+	adminGroup.Use(middleware2.Auth(middleware2.AuthConfig{
+		Type:     middleware2.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleAdmin,
 	}, ws.jwtManager))
@@ -82,8 +82,8 @@ func (ws *WebServer) registerRoutes() {
 
 	// 注册用户路由（需要用户权限）
 	userGroup := ws.engine.Group("user")
-	userGroup.Use(middleware.Auth(middleware.AuthConfig{
-		Type:     middleware.AuthTypeCookie,
+	userGroup.Use(middleware2.Auth(middleware2.AuthConfig{
+		Type:     middleware2.AuthTypeCookie,
 		Required: true,
 		Role:     constant.RoleUser,
 	}, ws.jwtManager))
