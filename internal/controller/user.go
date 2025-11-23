@@ -106,7 +106,7 @@ func (uc *UserController) generateToken(c *gin.Context) {
 	}
 
 	le.Info("user token generated successfully")
-	response.OkWithJson(c, gin.H{
-		"token": token,
+	response.OkWithJson(c, response.UserGenerateTokenResponseBody{
+		Token: token,
 	})
 }

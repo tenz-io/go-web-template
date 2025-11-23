@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"go-web-template/internal/constant"
+	"go-web-template/internal/controller/response"
 	"net/http"
 	"strings"
 	"time"
@@ -167,10 +168,7 @@ func Auth(config AuthConfig, jwtManager *JWTManager) gin.HandlerFunc {
 			handleCookieAuth(c, jwtManager, config.Role)
 		default:
 			le.Warn("unknown auth type, aborting")
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "不支持的鉴权类型",
-			})
+			response.FailWithJson(c, 401, "不支持的鉴权类型")
 			c.Abort()
 		}
 	}
@@ -183,10 +181,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		le.Warn("Authorization header is empty")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    401,
-			"message": "缺少 Authorization 头",
-		})
+		response.FailWithJson(c, 401, "缺少 Authorization 头")
 		c.Abort()
 		return
 	}
@@ -194,10 +189,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	token := strings.TrimPrefix(authHeader, "Bearer ")
 	if token == authHeader {
 		le.Warn("Authorization header is valid")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    401,
-			"message": "无效的 Bearer token",
-		})
+		response.FailWithJson(c, 401, "无效的 Bearer token")
 		c.Abort()
 		return
 	}
@@ -205,10 +197,7 @@ func handleBearerAuth(c *gin.Context, jwtManager *JWTManager) {
 	claims, err := jwtManager.ValidateToken(token)
 	if err != nil {
 		le.Warn("JWT validation failed")
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"code":    401,
-			"message": "无效的 token",
-		})
+		response.FailWithJson(c, 401, "无效的 token")
 		c.Abort()
 		return
 	}

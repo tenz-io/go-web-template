@@ -45,5 +45,7 @@ func (ac *ApiController) Hello(c *gin.Context) {
 		return
 	}
 
-	response.OkWithJson(c, user.Profile)
+	response.OkWithJson(c, response.HelloResponseBody{
+		Greeting: user.Profile,
+	})
 }

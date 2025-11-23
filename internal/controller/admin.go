@@ -83,19 +83,19 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 	}
 
 	// 转换用户角色为字符串
-	var userList []gin.H
+	var userList []response.UserItem
 	for _, user := range users {
-		userList = append(userList, gin.H{
-			"id":         user.ID,
-			"username":   user.Username,
-			"role":       constant.Role(user.Role).String(),
-			"created_at": user.CreatedAt,
+		userList = append(userList, response.UserItem{
+			ID:        user.ID,
+			Username:  user.Username,
+			Role:      constant.Role(user.Role).String(),
+			CreatedAt: user.CreatedAt,
 		})
 	}
 
-	response.OkWithJson(c, gin.H{
-		"users": userList,
-		"total": total,
+	response.OkWithJson(c, response.AdminGetUsersResponseBody{
+		Users: userList,
+		Total: total,
 	})
 }
 
@@ -132,7 +132,14 @@ func (ac *AdminController) AddUser(c *gin.Context) {
 	}
 
 	le.Info("user created successfully")
-	response.OkWithJson(c, user)
+	response.OkWithJson(c, response.AdminAddUserResponseBody{
+		ID:        user.ID,
+		Username:  user.Username,
+		Role:      user.Role,
+		Profile:   user.Profile,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
 }
 
 // DeleteUser 删除用户
