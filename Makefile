@@ -166,7 +166,7 @@ supervisor: ## Supervisor
 .PHONY: deploy
 deploy: build build-tools supervisor ## Deploy app to vps
 	@echo "=== deploy app"
-	rm -rf $(APP_DIR)/$(BIN_NAME) $(APP_DIR)/web
+	rm -rf $(APP_DIR)/$(BIN_DIR) $(APP_DIR)/web
 	mkdir -p $(APP_DIR)/web $(APP_DIR)/bin $(APP_DIR)/log
 	cp -rf $(BIN_DIR)/* $(APP_DIR)/bin
 	cp -rf $(CONF_DIR)/* $(APP_DIR)
