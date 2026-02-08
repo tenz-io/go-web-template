@@ -6,10 +6,15 @@
 REPO_NAME := go-web-template
 BIN_DIR := bin
 LOG_DIR := log
-CONFIG_FILE := config/app.yaml
+CONF_DIR := config
+CONFIG_FILE := $(CONF_DIR)/app.yaml
 PORT := 8090
 TOOL_DIR := tool
 TOOL_TARGETS := $(notdir $(wildcard $(TOOL_DIR)/*))
+
+USER := $(shell whoami)
+USER_HOME=$(shell echo $$HOME)
+APP_DIR=$(USER_HOME)/apps/$(REPO_NAME)
 
 GOCACHE := $(CURDIR)/.cache/go-build
 export GOCACHE
@@ -119,7 +124,6 @@ build: wire ## 构建项目
 run: build ## 构建并运行项目
 	@echo "$(BLUE)[INFO]$(NC) 启动服务..."
 	@echo "$(YELLOW)[INFO]$(NC) 服务地址: http://localhost:$(PORT)"
-	@echo "$(YELLOW)[INFO]$(NC) 管理后台: http://localhost:$(PORT)/admin/"
 	@echo "$(YELLOW)[INFO]$(NC) 按 Ctrl+C 停止服务"
 	@./$(BIN_DIR)/$(REPO_NAME) -c $(CONFIG_FILE) -p $(PORT) -v
 
@@ -154,6 +158,22 @@ clean: ## 清理构建文件
 	@rm -rf $(LOG_DIR)
 	@rm -f coverage.out coverage.html
 	@echo "$(GREEN)[SUCCESS]$(NC) 清理完成"
+
+.PHONY: supervisor
+supervisor: ## Supervisor
+	cat scripts/supervisor/$(REPO_NAME).ini | sed "s%{{USER}}%$(USER)%g" | sed "s%{{ENV_APP_PATH}}%$(APP_DIR)%g"
+
+.PHONY: deploy
+deploy: build build-tools supervisor ## Deploy app to vps
+	@echo "=== deploy app"
+	rm -rf $(APP_DIR)/$(BIN_NAME) $(APP_DIR)/web ${CONFIG_FILE}
+	mkdir -p $(APP_DIR)/web $(APP_DIR)/bin $(APP_DIR)/log
+	cp -rf $(BIN_DIR)/* $(APP_DIR)/bin
+	cp -rf $(CONF_DIR)/* $(APP_DIR)
+	cp -rf web/* $(APP_DIR)/web
+	supervisorctl restart $(REPO_NAME)
+	@echo "=== deploy app done"
+
 
 # 显示项目信息
 .PHONY: info
